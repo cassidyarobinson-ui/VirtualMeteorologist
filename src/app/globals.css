@@ -1,0 +1,2545 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Intent utility safelist.
+ *
+ * The registry exposes a canonical intent utility set that consumers (and the
+ * v0 precompiled styles.css) rely on. Some utilities — e.g. bg-intent-info-base
+ * — are not referenced by any current component, so Tailwind's content scan
+ * would omit them and the generated set would be internally inconsistent
+ * (info missing from a family the other intents have). Force-generate the full
+ * matrix so the emitted set is always complete and consistent for the four
+ * families the registry exposes:
+ *   bg-intent-*-subtle, bg-intent-*-base, text-intent-*-base, text-intent-*-emphasis
+ *   intents: success, info, warning, danger, neutral
+ */
+@source inline("bg-intent-{success,info,warning,danger,neutral}-{subtle,base}");
+@source inline("text-intent-{success,info,warning,danger,neutral}-{base,emphasis}");
+
+@custom-variant dark (&:is(.dark *));
+/* `touch:` variant — targets coarse-pointer input devices (touchscreens).
+ * Maps to @media (pointer: coarse) ONLY.
+ *
+ * Use `touch:` for hit-area expansion on interactive primitives
+ * (e.g. touch:after:size-[var(--control-touch-target)]).
+ *
+ * Do NOT use `touch:` for narrow-viewport-only layout concerns.
+ * For narrow viewports use standard responsive prefixes (e.g. max-md:, sm:).
+ *
+ * The separate mobile token override block further below targets
+ * @media (pointer: coarse), (max-width: 767px) — covering both coarse
+ * pointer AND narrow viewports — to scale control-height and
+ * control-font-entry tokens. That broader condition is intentional for
+ * token scaling but is not replicated here because @custom-variant only
+ * accepts a single media expression. */
+@custom-variant touch (@media (pointer: coarse));
+
+@layer base {
+  /* =============================================================================
+   * ECO DESIGN SYSTEM - COMPLETE DOCUMENTATION
+   * =============================================================================
+   *
+   * This design system is optimized for v0.dev integration and provides
+   * comprehensive documentation for DTN weather data company projects.
+   *
+   * TABLE OF CONTENTS:
+   * 1. v0 Integration Guide
+   * 2. Registry URLs
+   * 3. Typography System
+   * 4. Button Component System
+   * 5. Alert Component System
+   * 6. Badge Component System
+   * 7. Input & Select Components
+   * 8. Avatar Size System
+   * 9. Color System Overview
+   * 10. Data Table Component System
+   *
+   * =============================================================================
+   * 1. v0 INTEGRATION GUIDE
+   * =============================================================================
+   *
+   * QUICK START FOR v0 DEVELOPERS:
+   * 1. Import components from registry URLs (see registry section below)
+   * 2. Use Tailwind utilities with our custom color system
+   * 3. Follow component usage patterns documented in each section
+   * 4. All components work in version 0 of the design system
+   *
+   * IMPORT PATTERNS:
+   * ```tsx
+   * // UI components (recommended for v0)
+   * import { Button } from "@/components/ui/button"
+   * import { Card } from "@/components/ui/card"
+   *
+   * // CSS-based headings (no import needed)
+   * <h1>Main Title</h1>
+   * <h2>Section Header</h2>
+   *
+   * // Compound components (for advanced use cases)
+   * import { Typography } from "@/components/ui/typography"
+   *
+   * // Utility classes (fallback)
+   * <div className="bg-primary text-primary-foreground p-4 rounded-lg">
+   * ```
+   *
+   * THEME CUSTOMIZATION:
+   * - All colors are CSS custom properties for easy theming
+   * - Light/dark mode support built-in
+   * - Customizable via CSS variables in :root and .dark selectors
+   * - Brand colors: --brand-blue (#1497e3), --brand-green (#68c949)
+   *
+   * COMPONENT FEATURES:
+   * - All components support asChild prop for polymorphic rendering
+   * - Consistent sizing and spacing system
+   * - Accessibility-first design
+   * - TypeScript support with proper type definitions
+   * - Responsive design with mobile-first approach
+   *
+   * =============================================================================
+   * 2. REGISTRY URLs - ENVIRONMENT-BASED CONFIGURATION
+   * =============================================================================
+   *
+   * Registry URLs are dynamically generated based on environment variables.
+   * Set REGISTRY_BASE_URL to configure for different environments.
+   *
+   * ENVIRONMENT CONFIGURATION:
+ * - Local: REGISTRY_BASE_URL=http://localhost:3000
+ * - Dev: REGISTRY_BASE_URL=https://eco-design-system-2.dev.energy.zones.dtn.com
+ * - Staging: REGISTRY_BASE_URL=https://eco-design-system-2.stg.energy.zones.dtn.com
+ * - Production: REGISTRY_BASE_URL=https://eco-design-system-2.dtn.com
+   *
+   * The build script (scripts/build-registry.js) automatically generates all
+   * registry files with the correct base URL. No manual URL updates needed!
+   *
+ * REGISTRY URL STRUCTURE (using production as example):
+   *
+   * MAIN REGISTRY:
+ * https://eco-design-system-2.dtn.com/r/registry.json
+   *
+   * STYLES (Typography, Colors, etc.):
+   * - Typography: {BASE_URL}/r/styles/typography.json
+   * - Button: {BASE_URL}/r/styles/button.json
+   * - Alert: {BASE_URL}/r/styles/alert.json
+   * - Badge: {BASE_URL}/r/styles/badge.json
+   * - Card: {BASE_URL}/r/styles/card.json
+   * - Input: {BASE_URL}/r/styles/input.json
+   * - Select: {BASE_URL}/r/styles/select.json
+   *
+   * COMPONENTS (Interactive Elements):
+   * - All components: {BASE_URL}/r/components/
+   * - Brand Header: {BASE_URL}/r/components/brand-header.json
+   * - Brand Sidebar: {BASE_URL}/r/components/brand-sidebar.json
+   *
+   * BLOCKS (Complete Layouts):
+   * - All blocks: {BASE_URL}/r/blocks/
+   * - Starter Template: {BASE_URL}/r/blocks/starter-template.json
+   * - Two Panel Layout: {BASE_URL}/r/blocks/two-panel-layout.json
+   *
+   * THEME:
+   * - Theme: {BASE_URL}/r/themes/theme.json
+   *
+   * =============================================================================
+   * 3. TYPOGRAPHY SYSTEM
+   * =============================================================================
+   *
+   * This design system provides CSS-based heading styles for all DTN projects.
+   * Optimized for v0.dev integration with comprehensive usage examples.
+   *
+   * Available Heading Styles (CSS-based):
+   * - h1: Primary page/custom view titles (28px, font-weight: 700, line-height: 32px)
+   * - h2: Major section headers (24px, font-weight: 700, line-height: 28px)
+   * - h3: Subsection headers (21px, font-weight: 600, line-height: 24px)
+   * - h4: Panel/card/section headers (18px, font-weight: 600, line-height: 24px)
+   * - h5: Small group headers (16px, font-weight: 600, line-height: 20px)
+   * - h6: Lowest-level headings / compact group labels (14px, font-weight: 600, line-height: 20px)
+   *
+   * CSS-based Usage (RECOMMENDED for v0):
+   * ```tsx
+   * // Direct HTML elements with automatic styling
+   * <h1>Main Page Title</h1>
+   * <h2>Section Header</h2>
+   * <h3>Subsection Header</h3>
+   * <h4>Component Header</h4>
+   * <h5>Small Header</h5>
+   * <h6>Smallest Header</h6>
+   *
+   * // With custom classes for additional styling
+   * <h1 className="text-blue-500">Custom Styled Title</h1>
+   * <h2 className="mb-4">Section with margin</h2>
+   *
+   * // Compound component (for advanced use cases)
+   * import { Typography } from "@/components/ui/typography";
+   * <Typography.H1>Main Page Title</Typography.H1>
+   * <Typography.H2>Section Header</Typography.H2>
+   * ```
+   *
+   * v0 Integration Features:
+   * - All heading styles work automatically in version 0 of the design system
+   * - No component imports required for basic usage
+   * - CSS-based approach follows web standards
+   * - Consistent styling across all DTN projects
+   * - Font weights: h1-h2 use 700, h3-h6 use 600 for better hierarchy
+   * - Line heights optimized for readability and visual hierarchy
+   * - Responsive design with mobile-first approach
+   * - text-5xl is outside the ECO product scale; kept for framework compatibility only
+   *
+   * Customization for v0:
+   * - Override colors using CSS custom properties
+   * - Modify spacing with Tailwind utilities
+   * - Add custom classes while maintaining base functionality
+   * - Use className prop for additional styling
+   *
+   * Base Font Size Declaration:
+   * This ensures consistent rem-based sizing across all browsers and platforms.
+   * All rem values in this design system are calculated based on 16px = 1rem.
+   *
+   * Benefits:
+   * - Predictable sizing across all browsers
+   * - Consistent behavior regardless of user preferences
+   * - Professional design system with explicit control
+   * - Accessibility compliance with clear text sizing
+   *
+   * Text size scale (ECO Product - compact enterprise scale):
+   * - --text-xs: 0.6875rem = 11px (badges, metadata, tooltips, keyboard hints, metric unit/delta, facet counts)
+   * - --text-sm: 0.75rem = 12px (field labels, compact table headers/cells, group labels for menus/filters/columns/DataList sections, helper/error text, metric label, list metadata including timestamps/pagination/table caption)
+   * - --text-base: 0.8125rem = 13px (default body text, paragraphs, table loading/empty/performance states, navigation items, menu options including dropdown/filter/column rows, overlay descriptions, alert/toast body, standard table cells, list item title, data value for DataList default)
+   * - --text-md: 0.875rem = 14px (comfortable body; larger reading size for prose-adjacent contexts)
+   * - --text-lg: 1rem = 16px (h5, page description size, large controls, card titles, compact overlay titles)
+   * - --text-xl: 1.125rem = 18px (h4, panel titles, emphasized data value for DataList large)
+   * - --text-2xl: 1.3125rem = 21px (h3, metric value)
+   * - --text-3xl: 1.5rem = 24px (h2, section titles)
+   * - --text-4xl: 1.75rem = 28px (h1, standard page/custom view title)
+   *
+   * =============================================================================
+   * 4. BUTTON COMPONENT SYSTEM
+   * =============================================================================
+   *
+   * Comprehensive button system with dedicated color variables for consistent theming
+   * across all button variants. Optimized for v0.dev integration.
+   *
+   * Available button variants:
+   * - default: Primary action button (bg-button-primary, text-button-primary-foreground, hover:bg-button-primary-hover)
+   * - destructive: Dangerous actions (bg-button-destructive, text-button-destructive-foreground, hover:bg-button-destructive-hover)
+   * - outline: Secondary actions with white background (light) / slate background (dark) and border (bg-button-outline, border-button-outline-border, text-button-outline-foreground, hover:bg-button-outline-hover)
+   * - secondary: Alternative primary actions with cool slate background and border (bg-button-secondary, border-button-secondary-border, text-button-secondary-foreground, hover:bg-button-secondary-hover)
+   * - ghost: Subtle actions without border (hover:bg-button-ghost-hover, hover:text-button-ghost-hover-foreground)
+   * - link: Text-based actions (text-button-link, hover:text-button-link-hover, hover:underline)
+   *
+   * Available button sizes (responsive via control tokens):
+   * - sm: Small button - 24px height desktop, 40px mobile/touch
+   * - default: Standard button - 32px height desktop, 40px mobile/touch
+   * - lg: Large button - 40px height desktop, 44px mobile/touch
+   * - icon: Square icon button - 32px desktop, 40px mobile/touch
+   * - icon-sm: Small icon button - 24px desktop, 40px mobile/touch
+   *
+   * v0 Usage Examples:
+   * ```tsx
+   * // Import button component
+   * import { Button } from "@/components/ui/button";
+   *
+   * // Basic usage with variants
+   * <Button variant="default">Primary Action</Button>
+   * <Button variant="destructive">Delete Item</Button>
+   * <Button variant="outline">Outline Action</Button>
+   * <Button variant="secondary">Secondary Action</Button>
+   * <Button variant="ghost">Ghost Action</Button>
+   * <Button variant="link">Link Action</Button>
+   *
+   * // Size variants (responsive via control tokens)
+   * <Button size="sm">Small</Button>                // 24px desktop, 40px mobile
+   * <Button size="default">Default</Button>         // 32px desktop, 40px mobile
+   * <Button size="lg">Large</Button>                // 40px desktop, 44px mobile
+   * <Button size="icon">Icon Only</Button>          // 32px desktop, 40px mobile
+   * <Button size="icon-sm">Small Icon</Button>      // 24px desktop, 40px mobile
+   *
+   * // Size examples with different variants
+   * <Button variant="destructive" size="sm">Delete</Button>
+   * <Button variant="outline" size="lg">Save Changes</Button>
+   * <Button variant="ghost" size="icon" aria-label="Settings">
+   *   <SettingsIcon className="h-4 w-4" />
+   * </Button>
+   *
+   * // With icons and proper spacing
+   * <Button size="default">
+   *   <PlusIcon className="mr-2 h-4 w-4" />
+   *   Add Item
+   * </Button>
+   *
+   * // Custom styling
+   * <Button className="w-full">Full Width</Button>
+   * <Button disabled>Disabled State</Button>
+   * ```
+   *
+   * v0 Integration Features:
+   * - All components work in version 0 of the design system
+   * - TypeScript support with proper type definitions
+   * - asChild prop support for polymorphic rendering
+   * - Consistent Tailwind CSS utilities for maximum compatibility
+   * - Responsive design with mobile-first approach
+   * - Accessibility-first design with proper focus states
+   *
+   * Customization for v0:
+   * - Override colors using CSS custom properties
+   * - Modify spacing with Tailwind utilities
+   * - Add custom classes while maintaining base functionality
+   * - Use className prop for additional styling
+   * - Customize hover states with dedicated color variables
+   *
+   * =============================================================================
+   * 5. ALERT COMPONENT SYSTEM
+   * =============================================================================
+   *
+   * Alert color comes from the intent color system (source of truth for
+   * tag/status/badge/alert color). Optimized for v0.dev integration.
+   *
+   * Alert has three axes:
+   * - variant (status): default (neutral), info, success, warning,
+   *   destructive (danger). Selects the icon shape and the status color.
+   *   NOTE: Figma names the danger status "Error"; the code variant is
+   *   "destructive" (retained public name).
+   * - presentation:
+   *     - contained (default): white --background surface, status-colored
+   *       border (--intent-{variant}-base), rounded-md, no shadow. Title
+   *       and description stack.
+   *     - banner: status-subtle tinted background (--intent-{variant}-subtle),
+   *       no border, no radius, no shadow. Title and description read inline.
+   * - orientation: horizontal (default) or vertical. Horizontal is a
+   *   responsive, horizontal-first layout: the action sits beside the message
+   *   in wide containers and moves below it when the alert's container is
+   *   constrained (@md container query, container width — not viewport).
+   *   Vertical keeps the action below the message at every width. Dismiss stays
+   *   top-right in both.
+   *
+   * Title uses --foreground; body/description uses --secondary-foreground.
+   * The `action` and `link` slots are composable: consumers pass their own
+   * semantic Button / anchor. Icons are decorative — status is also conveyed by
+   * the title/description text, never by color/icon alone.
+   *
+   * Intent roles:
+   * - subtle   (--intent-{type}-subtle):   Banner background, tag/badge tint
+   * - base     (--intent-{type}-base):     Contained border, status dot/icon, sonner icon, alert icon
+   * - emphasis (--intent-{type}-emphasis): text on a subtle background (tag/badge)
+   *
+   * v0 Usage Examples:
+   * ```tsx
+   * // Import alert component
+   * import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+   *
+   * // Basic usage with variants
+   * <Alert>
+   *   <AlertTitle>Default Alert</AlertTitle>
+   *   <AlertDescription>This is a default alert message.</AlertDescription>
+   * </Alert>
+   *
+   * <Alert variant="destructive">
+   *   <AlertTitle>Error</AlertTitle>
+   *   <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+   * </Alert>
+   *
+   * <Alert variant="info">
+   *   <AlertTitle>Information</AlertTitle>
+   *   <AlertDescription>Here's some helpful information.</AlertDescription>
+   * </Alert>
+   *
+   * <Alert variant="success">
+   *   <AlertTitle>Success</AlertTitle>
+   *   <AlertDescription>Your action was completed successfully.</AlertDescription>
+   * </Alert>
+   *
+   * <Alert variant="warning">
+   *   <AlertTitle>Warning</AlertTitle>
+   *   <AlertDescription>Please review before proceeding.</AlertDescription>
+   * </Alert>
+   *
+   * // Default status icon
+   * <Alert showIcon>
+   *   <AlertTitle>With Icon</AlertTitle>
+   *   <AlertDescription>Alert with an icon.</AlertDescription>
+   * </Alert>
+   *
+   * // Banner presentation (tinted background, no border)
+   * <Alert presentation="banner" variant="info" showIcon>
+   *   <AlertTitle>Heads up</AlertTitle>
+   *   <AlertDescription>Banner reads inline.</AlertDescription>
+   * </Alert>
+   *
+   * // Action slot (consumer-owned Button at its default 32px size)
+   * <Alert
+   *   variant="warning"
+   *   showIcon
+   *   action={<Button variant="outline">Review</Button>}
+   * >
+   *   <AlertTitle>Attention needed</AlertTitle>
+   *   <AlertDescription>Please review your settings.</AlertDescription>
+   * </Alert>
+   *
+   * // Inline link slot (semantic anchor, flows after the description)
+   * <Alert variant="info" showIcon link={<a href="/docs">Learn more</a>}>
+   *   <AlertTitle>New documentation</AlertTitle>
+   *   <AlertDescription>Read about the updated Alert component.</AlertDescription>
+   * </Alert>
+   *
+   * // Vertical layout keeps the action below the message at every width
+   * <Alert orientation="vertical" action={<Button>Retry</Button>}>
+   *   <AlertDescription>The action stays below the message.</AlertDescription>
+   * </Alert>
+   *
+   * // Dismissible — showCloseButton REQUIRES onClose (no inert control).
+   * // Alert calls onClose; the consumer removes the alert and manages focus.
+   * <Alert showCloseButton onClose={() => removeAlert()}>
+   *   <AlertTitle>Dismissible Alert</AlertTitle>
+   *   <AlertDescription>This alert can be closed.</AlertDescription>
+   * </Alert>
+   * ```
+   *
+   * v0 Integration Features:
+   * - All components work in version 0 of the design system
+   * - TypeScript support with proper type definitions
+   * - asChild prop support for polymorphic rendering
+   * - Consistent Tailwind CSS utilities for maximum compatibility
+   * - Responsive design with mobile-first approach
+   * - Accessibility-first design with proper ARIA roles
+   *
+   * Customization for v0:
+   * - Override colors using CSS custom properties
+   * - Modify spacing with Tailwind utilities
+   * - Add custom classes while maintaining base functionality
+   * - Use className prop for additional styling
+   * - Customize close button behavior
+   *
+   * =============================================================================
+   * 6. BADGE COMPONENT SYSTEM
+   * =============================================================================
+   *
+   * Badge/tag color comes from the intent color system. Each variant uses a
+   * subtle intent background with emphasis intent text:
+   * bg-intent-{type}-subtle + text-intent-{type}-emphasis.
+   * Optimized for v0.dev integration.
+   *
+   * Available badge variants:
+   * - default:  bg-intent-neutral-subtle / text-intent-neutral-emphasis
+   * - positive: bg-intent-success-subtle / text-intent-success-emphasis
+   * - info:     bg-intent-info-subtle / text-intent-info-emphasis
+   * - warning:  bg-intent-warning-subtle / text-intent-warning-emphasis
+   * - danger:   bg-intent-danger-subtle / text-intent-danger-emphasis
+   * - dot:      colored status dot using bg-intent-{type}-base
+   *
+   * v0 Usage Examples:
+   * ```tsx
+   * // Import badge component
+   * import { Badge } from "@/components/ui/badge";
+   *
+   * // Basic usage with variants
+   * <Badge>Default Badge</Badge>
+   * <Badge variant="danger">Error</Badge>
+   * <Badge variant="info">Information</Badge>
+   * <Badge variant="positive">Success</Badge>
+   * <Badge variant="warning">Warning</Badge>
+   *
+   * // Status dot
+   * <Badge variant="dot" dotColor="success">Active</Badge>
+   *
+   * // With icons
+   * <Badge>
+   *   <CheckIcon className="mr-1 h-3 w-3" />
+   *   Verified
+   * </Badge>
+   *
+   * // Custom styling
+   * <Badge className="px-3 py-1">Custom Badge</Badge>
+   *
+   * // In lists or cards
+   * <div className="flex gap-2">
+   *   <Badge variant="positive">Active</Badge>
+   *   <Badge variant="info">New</Badge>
+   *   <Badge variant="warning">Pending</Badge>
+   * </div>
+   * ```
+   *
+   * v0 Integration Features:
+   * - All components work in version 0 of the design system
+   * - TypeScript support with proper type definitions
+   * - asChild prop support for polymorphic rendering
+   * - Consistent Tailwind CSS utilities for maximum compatibility
+   * - Responsive design with mobile-first approach
+   * - Accessibility-first design
+   *
+   * Customization for v0:
+   * - Override colors using CSS custom properties
+   * - Modify spacing with Tailwind utilities
+   * - Add custom classes while maintaining base functionality
+   * - Use className prop for additional styling
+   * - Customize size and shape with utility classes
+   *
+   * =============================================================================
+   * 7. INPUT & SELECT COMPONENTS
+   * =============================================================================
+   *
+   * Form input components optimized for v0.dev integration with comprehensive usage examples.
+   *
+   * v0 Usage Examples:
+   * ```tsx
+   * // Import form components
+   * import { Input } from "@/components/ui/input";
+   * import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+   * import { Label } from "@/components/ui/label";
+   *
+   * // Basic input usage
+   * <div className="space-y-2">
+   *   <Label htmlFor="email">Email</Label>
+   *   <Input id="email" type="email" placeholder="Enter your email" />
+   * </div>
+   *
+   * // Input with different types
+   * <Input type="text" placeholder="Enter text" />
+   * <Input type="password" placeholder="Enter password" />
+   * <Input type="number" placeholder="Enter number" />
+   * <Input type="search" placeholder="Search..." />
+   *
+   * // Input with states
+   * <Input disabled placeholder="Disabled input" />
+   * <Input className="border-red-500" placeholder="Error state" />
+   *
+   * // Basic select usage
+   * <Select>
+   *   <SelectTrigger>
+   *     <SelectValue placeholder="Select an option" />
+   *   </SelectTrigger>
+   *   <SelectContent>
+   *     <SelectItem value="option1">Option 1</SelectItem>
+   *     <SelectItem value="option2">Option 2</SelectItem>
+   *     <SelectItem value="option3">Option 3</SelectItem>
+   *   </SelectContent>
+   * </Select>
+   *
+   * // Select with label
+   * <div className="space-y-2">
+   *   <Label>Choose an option</Label>
+   *   <Select>
+   *     <SelectTrigger>
+   *       <SelectValue placeholder="Select an option" />
+   *     </SelectTrigger>
+   *     <SelectContent>
+   *       <SelectItem value="option1">Option 1</SelectItem>
+   *       <SelectItem value="option2">Option 2</SelectItem>
+   *     </SelectContent>
+   *   </Select>
+   * </div>
+   *
+   * // Form with validation
+   * <form className="space-y-4">
+   *   <div>
+   *     <Label htmlFor="name">Name</Label>
+   *     <Input id="name" required />
+   *   </div>
+   *   <div>
+   *     <Label htmlFor="category">Category</Label>
+   *     <Select>
+   *       <SelectTrigger>
+   *         <SelectValue placeholder="Select category" />
+   *       </SelectTrigger>
+   *       <SelectContent>
+   *         <SelectItem value="weather">Weather</SelectItem>
+   *         <SelectItem value="agriculture">Agriculture</SelectItem>
+   *         <SelectItem value="energy">Energy</SelectItem>
+   *       </SelectContent>
+   *     </Select>
+   *   </div>
+   * </form>
+   * ```
+   *
+   * v0 Integration Features:
+   * - All components work in version 0 of the design system
+   * - TypeScript support with proper type definitions
+   * - Consistent Tailwind CSS utilities for maximum compatibility
+   * - Responsive design with mobile-first approach
+   * - Accessibility-first design with proper labels and ARIA attributes
+   * - Form validation support
+   *
+   * Customization for v0:
+   * - Override colors using CSS custom properties
+   * - Modify spacing with Tailwind utilities
+   * - Add custom classes while maintaining base functionality
+   * - Use className prop for additional styling
+   * - Customize focus states and validation styling
+   *
+   * =============================================================================
+   * 8. AVATAR SIZE SYSTEM
+   * =============================================================================
+   *
+   * These size utilities provide consistent avatar dimensions across all variants.
+   *
+   * Available sizes:
+   * - size-8: 32px (2rem) - Small avatar for compact layouts
+   * - size-10: 40px (2.5rem) - Medium avatar for standard use
+   * - size-12: 48px (3rem) - Large avatar for prominent display
+   *
+   * Usage in components:
+   * - className="size-8" (32px avatar)
+   * - className="size-10" (40px avatar)
+   * - className="size-12" (48px avatar)
+   *
+   * Automatic scaling:
+   * - All sizes maintain aspect-square ratio
+   * - Responsive design with proper scaling
+   * - Consistent spacing and alignment
+   *
+   * Component integration:
+   * - Avatar component automatically uses these utilities
+   * - Size variants map directly to Tailwind size classes
+   * - Fallback content scales appropriately
+   * - Images maintain proper proportions
+   *
+   * =============================================================================
+   * 9. COLOR SYSTEM OVERVIEW
+   * =============================================================================
+   *
+   * The design system uses a harmonious cool-toned color palette with semantic naming:
+   *
+   * Brand Colors:
+   * - --brand-blue: #1497e3 (Primary brand color)
+   * - --brand-green: #68c949 (Secondary brand color)
+   *
+   * Neutral Colors:
+   * - --neutral-white: #ffffff
+   * - --neutral-black: #000000
+   *
+   * Color Scales (50-950) - Harmonious Cool-Toned Palette:
+   * - Gray: Cool gray for structural elements (backgrounds, borders, dividers)
+   * - Slate: Blue-gray for interactive elements (components, text, states)
+   * - Blue: Primary brand blues
+   * - Green: Secondary brand greens
+   * - Red: Error and destructive states
+   * - Orange: Warning states
+   *
+   * Color Usage Strategy:
+   * - Gray: Page structure, layout borders, section dividers, navigation backgrounds
+   * - Slate: Component backgrounds, text content, interactive states, card elements
+   * - Both families work harmoniously with cool undertones for modern aesthetic
+   *
+   * Semantic Colors:
+   * - --primary: Main action color (blue-500)
+   * - --secondary: Secondary action color (slate-100/900)
+   * - --destructive: Error/danger color (red-500)
+   * - --muted: Subtle text color (slate-200/800)
+   * - --accent: Accent color (slate-100/800)
+   * - --background: Page background (white/black)
+   * - --foreground: Main text color (gray-950/white)
+   * - --card: Card background (same as background for minimal design)
+   *
+   * Surface Hierarchy:
+   * - --bg-surface-light: Subtle surface background (gray-50/950)
+   * - --bg-surface-medium: Medium surface background (gray-100/900)
+   * - --bg-surface-dark: Dark surface background (gray-200/800)
+   *
+   * All colors automatically adapt to light/dark mode via CSS custom properties.
+   * Colors are mapped to Tailwind utilities in the @theme inline section below.
+   *
+   * =============================================================================
+   * 10. DATA TABLE COMPONENT SYSTEM
+   * =============================================================================
+   *
+   * Comprehensive data table system with dedicated color variables for consistent theming.
+   * Follows the same pattern as buttons, alerts, and badges with component-specific variables.
+   * Optimized for v0.dev integration.
+   *
+   * Available CSS Variables:
+   * - --data-table-background: Table background color
+   * - --data-table-foreground: Table text color
+   * - --data-table-border: Table border color
+   *
+   * Note: Row hover uses accent/50, selected uses accent, header uses muted (Tailwind classes)
+   *
+   * v0 Usage Examples:
+   * ```tsx
+   * // Import data table components
+   * import { DataTable } from "@/components/ui/data-table";
+   * import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+   *
+   * // Basic table usage
+   * <Table>
+   *   <TableHeader>
+   *     <TableRow>
+   *       <TableHead>Column 1</TableHead>
+   *       <TableHead>Column 2</TableHead>
+   *     </TableRow>
+   *   </TableHeader>
+   *   <TableBody>
+   *     <TableRow>
+   *       <TableCell>Data 1</TableCell>
+   *       <TableCell>Data 2</TableCell>
+   *     </TableRow>
+   *   </TableBody>
+   * </Table>
+   *
+   * // Advanced data table with sorting, filtering, pagination
+   * <DataTable
+   *   columns={columns}
+   *   data={data}
+   *   globalSearch={true}
+   *   showColumnVisibility={true}
+   *   showRowSelection={true}
+   * />
+   * ```
+   *
+   * v0 Integration Features:
+   * - Component-specific CSS variables (--data-table-*)
+   * - Matches design system pattern with buttons, alerts, badges
+   * - Full light/dark mode support
+   * - Independent theming capability
+   * - Sorting, filtering, pagination built-in
+   * - Row selection and bulk actions
+   * - Accessibility compliant with ARIA attributes
+   *
+   * Customization for v0:
+   * - Override --data-table-* variables for custom themes
+   * - All table styling uses these dedicated variables
+   * - No generic variables (--primary, --secondary) used
+   * - Consistent with design system architecture
+   *
+   * =============================================================================
+   * END OF DOCUMENTATION
+   * ============================================================================= */
+
+  html {
+    font-size: 16px;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentColor);
+  }
+
+  body {
+    font-size: var(--text-base); /* 13px */
+    color: var(--color-foreground);
+    line-height: 1.125rem; /* 18px */
+    font-family: var(--font-sans);
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  /* Typography System - CSS-based headings with compact product ladder */
+  h1 {
+    font-family: var(--font-sans);
+    font-size: var(--text-4xl); /* 28px */
+    font-weight: 700;
+    line-height: 2rem; /* 32px */
+    margin: 0;
+  }
+
+  h2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-3xl); /* 24px */
+    font-weight: 700;
+    line-height: 1.75rem; /* 28px */
+    margin: 0;
+  }
+
+  h3 {
+    font-family: var(--font-sans);
+    font-size: var(--text-2xl); /* 21px */
+    font-weight: 600;
+    line-height: 1.5rem; /* 24px */
+    margin: 0;
+  }
+
+  h4 {
+    font-family: var(--font-sans);
+    font-size: var(--text-xl); /* 18px */
+    font-weight: 600;
+    line-height: 1.5rem; /* 24px */
+    margin: 0;
+  }
+
+  h5 {
+    font-family: var(--font-sans);
+    font-size: var(--text-lg); /* 16px */
+    font-weight: 600;
+    line-height: 1.25rem; /* 20px */
+    margin: 0;
+  }
+
+  h6 {
+    font-family: var(--font-sans);
+    font-size: var(--text-md); /* 14px */
+    font-weight: 600;
+    line-height: 1.25rem; /* 20px */
+    margin: 0;
+  }
+
+  label {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm); /* 12px */
+    font-weight: 400;
+    line-height: 1rem; /* 16px - 1.33x ratio */
+    color: var(--color-secondary-foreground);
+  }
+
+  small {
+    font-family: var(--font-sans);
+    font-size: var(--text-xs); /* 11px */
+    font-weight: 400;
+    line-height: 1rem; /* 16px - 1.45x ratio */
+    color: var(--color-secondary-foreground);
+  }
+
+  p {
+    font-family: var(--font-sans);
+    font-size: var(--text-base); /* 13px */
+    font-weight: 400;
+    line-height: 1.125rem; /* 18px - 1.38x ratio */
+    margin: 0;
+  }
+
+  mark {
+    background-color: rgb(255 255 0 / 0.6); /* 80% opacity yellow */
+  }
+
+  * {
+    border-color: var(--color-border);
+    outline-color: color-mix(in srgb, var(--color-ring) 50%, transparent);
+  }
+}
+
+:root {
+  --neutral-white: #ffffff;
+  --neutral-black: #000000;
+
+  --brand-blue: #1497e3;
+  --brand-green: #68c949;
+
+  /* Font family definitions */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+    sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --gray-50: #f8fafc;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  --slate-50: #f9fafb;
+  --slate-100: #f1f3f5;
+  --slate-200: #e2e6ea;
+  --slate-300: #cdd3da;
+  --slate-400: #aab3bd;
+  --slate-500: #87939e;
+  --slate-600: #66717c;
+  --slate-700: #4b5762;
+  --slate-800: #2c343d;
+  --slate-900: #1f272f;
+  --slate-950: #0f1214;
+
+  --blue-50: #ecf6fe;
+  --blue-100: #ddeffd;
+  --blue-200: #c0e2fc;
+  --blue-300: #78bcf0;
+  --blue-400: #1a93ef;
+  --blue-500: #007bd9;
+  --blue-600: #005aa1;
+  --blue-700: #004c87;
+  --blue-800: #003e6e;
+  --blue-900: #003054;
+  --blue-950: #00213b;
+
+  --green-50: #f0fcec;
+  --green-100: #e3f8dc;
+  --green-200: #c8f1bb;
+  --green-300: #9fe38a;
+  --green-400: #71ce53;
+  --green-500: #52b434;
+  --green-600: #3d8527;
+  --green-700: #326b20;
+  --green-800: #224916;
+  --green-900: #132b0c;
+  --green-950: #0a1706;
+
+  --red-50: #ffedeb;
+  --red-100: #ffdad6;
+  --red-200: #fdc0b9;
+  --red-300: #fa8c80;
+  --red-400: #f35a49;
+  --red-500: #e0230f;
+  --red-600: #bb1d0c;
+  --red-700: #8e180b;
+  --red-800: #60130b;
+  --red-900: #3a0d08;
+  --red-950: #1e0805;
+
+  --orange-50: #fff3eb;
+  --orange-100: #ffe6d6;
+  --orange-200: #fdd1b4;
+  --orange-300: #f8b181;
+  --orange-400: #f19150;
+  --orange-500: #ed701d;
+  --orange-600: #c15710;
+  --orange-700: #934510;
+  --orange-800: #62300e;
+  --orange-900: #381c0a;
+  --orange-950: #1d0f06;
+
+  /* Font sizes - ECO Product Scale (compact enterprise layouts)
+   * Final reconciliation: 14px is text-md, 18px is text-xl, no 15px or 17px public steps
+   * 
+   * IMPORTANT: text-5xl and text-7xl exposure classification
+   * ----------------------------------------------------------
+   * Tailwind v4 generates text-5xl and text-7xl variables by default.
+   * These are NOT part of the ECO design system product scale.
+   *
+   * Classification: Tailwind framework defaults (not DS product utilities)
+   * - Variables exist in generated CSS (--text-5xl, --text-7xl)
+   * - Utility classes exist (.text-5xl, .text-7xl)
+   * - NOT used in any DS component source code
+   * - NOT exposed as DS product scale recommendations
+   * - NOT documented in DS typography guidance
+   * 
+   * If display-size typography is needed above 28px, use explicit arbitrary values:
+   * Example: className="text-[3rem] leading-none" for 48px display metrics
+   *
+   * Rationale: Explicit arbitrary values make it clear these are one-off display
+   * exceptions, not part of the systematic type scale. Prevents accidental expansion
+   * of the DS scale without design review.
+   *
+   * Product Scale Roles:
+   * --text-xs: badges, metadata, tooltips, keyboard hints, metric metadata (unit/delta), facet counts
+   * --text-sm: field labels, compact table headers, group labels (menus/filters/columns/DataList sections), helper/error text, metric label, list metadata (timestamps/pagination/table caption)
+   * --text-base: default body text, navigation items, menu options (dropdown/filter/column rows), overlay descriptions, alert body, toast body, standard table cells, list item title, data value (DataList default), table loading/empty/performance states
+   * --text-md: comfortable body (larger reading size for prose-adjacent contexts; not navigation/menu default)
+   * --text-lg: h5, page description size, large controls, card titles, compact overlay titles (Sheet/AlertDialog)
+   * --text-xl: h4, panel titles, emphasized data value (DataList large)
+   * --text-2xl: h3, metric value
+   * --text-3xl: h2, section titles
+   * --text-4xl: h1, standard page/custom view title
+   */
+  --text-xs: 0.6875rem; /* 11px - badges, metadata, tooltips, keyboard hints, metric metadata (unit/delta), facet counts */
+  --text-sm: 0.75rem; /* 12px - field labels, compact table headers, group labels (menus/filters/columns/DataList sections), helper/error text, metric label, list metadata (timestamps/pagination/table caption) */
+  --text-base: 0.8125rem; /* 13px - default body text, navigation items, menu options (dropdown/filter/column rows), overlay descriptions, alert/toast body, standard table cells, list item title, data value (DataList default), table loading/empty/performance states */
+  --text-md: 0.875rem; /* 14px - comfortable body (not navigation/menu default) */
+  --text-lg: 1rem; /* 16px - h5, page description size, large controls, card titles, compact overlay titles (Sheet/AlertDialog) */
+  --text-xl: 1.125rem; /* 18px - h4, panel titles, emphasized data value (DataList large) */
+  --text-2xl: 1.3125rem; /* 21px - h3, metric value */
+  --text-3xl: 1.5rem; /* 24px - h2, section titles */
+  --text-4xl: 1.75rem; /* 28px - h1, standard page/custom view title */
+  --text-5xl: 1.75rem; /* 28px - NOT ECO product scale; kept for framework compatibility */
+
+  /* Button-specific typography tokens
+   * These remain stable across desktop/mobile - only button heights change on touch */
+  --button-font-sm: var(--text-sm); /* 12px - small buttons */
+  --button-font-default: var(--text-base); /* 13px - default buttons */
+  --button-font-lg: var(--text-lg); /* 16px - large buttons */
+
+  /* Text-entry control typography tokens
+   * These scale on mobile to prevent iOS zoom behavior
+   *
+   * IMPORTANT: Editable entry vs non-editable selection distinction
+   * ------------------------------------------------------------------
+   * --control-font-entry applies ONLY to actual editable text entry:
+   * - Input (text, email, password, number, search, tel, url)
+   * - Textarea
+   * - OTP input
+   * - InputGroup entry controls
+   * - Searchable Combobox input (actual text input field)
+   *
+   * It does NOT apply to:
+   * - Select (non-editable selection trigger)
+   * - Non-searchable Combobox trigger (non-editable)
+   *
+   * Rationale: Only actual text entry fields need iOS zoom prevention.
+   * Non-editable selection controls remain stable 13px UI text.
+   */
+  --control-font-entry: var(--text-base); /* 13px desktop - for editable text entry fields only */
+
+  /* Control sizing tokens for form primitives (buttons, inputs, selects)
+   * These provide consistent control heights that can scale independently
+   * for improved mobile/touch usability */
+  --control-height-sm: 1.5rem; /* 24px - compact controls */
+  --control-height-md: 2rem; /* 32px - standard controls */
+  --control-height-lg: 2.5rem; /* 40px - large controls */
+  --control-size-icon-sm: 1.5rem; /* 24px - compact icon controls */
+  --control-size-icon-md: 2rem; /* 32px - standard icon controls */
+  --control-touch-target: 2.5rem; /* 40px - minimum touch target */
+
+  --background: var(--neutral-white);
+  --foreground: var(--gray-950);
+
+  --card: var(--background);
+  --card-foreground: var(--foreground);
+
+  --popover: var(--bg-component-default);
+  --popover-foreground: var(--foreground);
+
+  --primary: var(--blue-500);
+  --primary-foreground: var(--neutral-white);
+
+  --secondary: var(--slate-100);
+  --secondary-foreground: var(--slate-800);
+
+  --muted: var(--slate-200);
+  --muted-foreground: var(--slate-600);
+
+  --accent: var(--slate-100);
+  --accent-foreground: var(--foreground);
+
+  --destructive: var(--red-500);
+  --destructive-foreground: var(--neutral-white);
+  --destructive-border: var(--red-200);
+  --destructive-muted: var(--red-600);
+
+  --border: var(--gray-200);
+  --input: var(--slate-300);
+  --ring: var(--blue-400);
+
+  /* Interactive element borders */
+  --border-interactive: var(--slate-300);
+
+  /* ==========================================================================
+   * INTENT COLOR SYSTEM
+   * ==========================================================================
+   * Canonical semantic intent tokens. Mode-aware:
+   * - subtle: tinted background (200 light / 800 dark)
+   * - base: icon/indicator/dot fill (500 both modes)
+   * - emphasis: text on tinted background (800 light / 200 dark)
+   * ========================================================================== */
+  --intent-success-subtle: var(--green-200);
+  --intent-success-base: var(--green-500);
+  --intent-success-emphasis: var(--green-800);
+
+  --intent-info-subtle: var(--blue-200);
+  --intent-info-base: var(--blue-500);
+  --intent-info-emphasis: var(--blue-800);
+
+  --intent-warning-subtle: var(--orange-200);
+  --intent-warning-base: var(--orange-500);
+  --intent-warning-emphasis: var(--orange-800);
+
+  --intent-danger-subtle: var(--red-200);
+  --intent-danger-base: var(--red-500);
+  --intent-danger-emphasis: var(--red-800);
+
+  --intent-neutral-subtle: var(--slate-200);
+  --intent-neutral-base: var(--slate-500);
+  --intent-neutral-emphasis: var(--slate-800);
+
+  /* ==========================================================================
+   * DEPRECATED INTENT COMPATIBILITY ALIASES
+   * ==========================================================================
+   * Keep for existing registry consumers; prefer --intent-* tokens for new work.
+   * ========================================================================== */
+
+  /* Legacy alert surface tokens (unused after alert redesign to neutral bg) */
+  --info: var(--blue-50);
+  --info-foreground: var(--blue-700);
+  --info-border: var(--blue-200);
+  --info-muted: var(--intent-info-base);
+
+  --default: var(--slate-100);
+  --default-foreground: var(--foreground);
+  --default-border: var(--slate-200);
+  --default-muted: var(--intent-neutral-base);
+
+  --success: var(--green-50);
+  --success-foreground: var(--green-700);
+  --success-border: var(--green-200);
+  --success-muted: var(--intent-success-base);
+
+  --warning: var(--orange-50);
+  --warning-foreground: var(--orange-700);
+  --warning-border: var(--orange-200);
+  --warning-muted: var(--intent-warning-base);
+
+  --alert-destructive: var(--red-50);
+  --alert-destructive-foreground: var(--red-700);
+  --alert-destructive-border: var(--red-200);
+  --alert-destructive-muted: var(--intent-danger-base);
+
+  /* Legacy tag/badge tokens — now aliased through intent */
+  --tag-default-bg: var(--intent-neutral-subtle);
+  --tag-default-text: var(--intent-neutral-emphasis);
+  --tag-positive-bg: var(--intent-success-subtle);
+  --tag-positive-text: var(--intent-success-emphasis);
+  --tag-warning-bg: var(--intent-warning-subtle);
+  --tag-warning-text: var(--intent-warning-emphasis);
+  --tag-info-bg: var(--intent-info-subtle);
+  --tag-info-text: var(--intent-info-emphasis);
+  --tag-danger-bg: var(--intent-danger-subtle);
+  --tag-danger-text: var(--intent-danger-emphasis);
+
+  /* Button Component Variables */
+  --button-primary: var(--primary);
+  --button-primary-foreground: var(--primary-foreground);
+  --button-primary-hover: var(--blue-500);
+  --button-primary-active: var(--blue-600);
+  --button-primary-start: var(--blue-500);
+  --button-primary-end: var(--utility-blue);
+
+  --button-secondary: var(--secondary);
+  --button-secondary-foreground: var(--secondary-foreground);
+  --button-secondary-hover: var(--slate-100);
+  --button-secondary-active: var(--slate-200);
+  --button-secondary-border: var(--slate-300);
+  --button-secondary-start: var(--slate-50);
+  --button-secondary-end: var(--slate-200);
+
+  --button-destructive: var(--red-500);
+  --button-destructive-foreground: var(--destructive-foreground);
+  --button-destructive-hover: var(--red-600);
+  --button-destructive-active: var(--red-700);
+
+  --button-outline: var(--neutral-white);
+  --button-outline-foreground: var(--secondary-foreground);
+  --button-outline-hover: var(--slate-100);
+  --button-outline-active: var(--slate-200);
+  --button-outline-hover-foreground: var(--secondary-foreground);
+  --button-outline-border: var(--border-interactive);
+
+  --button-ghost-hover: var(--slate-100);
+  --button-ghost-active: var(--slate-200);
+  --button-ghost-hover-foreground: var(--accent-foreground);
+
+  --button-link: var(--primary);
+  --button-link-hover: var(--blue-600);
+
+  --chart-1: var(--blue-500);
+  --chart-2: var(--blue-400);
+  --chart-3: var(--blue-300);
+  --chart-4: var(--blue-200);
+  --chart-5: var(--blue-100);
+
+  /* Data Visualization Colors - Paul Tol Palettes */
+
+  /* Bright - Categorical (7 colors) */
+  --data-viz-bright-1: 68 119 170; /* #4477AA */
+  --data-viz-bright-2: 238 102 119; /* #EE6677 */
+  --data-viz-bright-3: 34 136 51; /* #228833 */
+  --data-viz-bright-4: 204 187 68; /* #CCBB44 */
+  --data-viz-bright-5: 102 204 238; /* #66CCEE */
+  --data-viz-bright-6: 170 51 119; /* #AA3377 */
+  --data-viz-bright-7: 187 187 187; /* #BBBBBB */
+
+  /* Muted - Professional (9 colors) */
+  --data-viz-muted-1: 51 34 136; /* #332288 */
+  --data-viz-muted-2: 136 204 238; /* #88CCEE */
+  --data-viz-muted-3: 68 170 153; /* #44AA99 */
+  --data-viz-muted-4: 136 187 102; /* #88BB44 */
+  --data-viz-muted-5: 204 187 68; /* #CCBB44 */
+  --data-viz-muted-6: 238 153 68; /* #EE9944 */
+  --data-viz-muted-7: 238 102 119; /* #EE6677 */
+  --data-viz-muted-8: 170 51 119; /* #AA3377 */
+  --data-viz-muted-9: 153 153 153; /* #999999 */
+
+  /* Sunset - Diverging (9 colors) */
+  --data-viz-sunset-1: 54 75 154; /* #364B9A */
+  --data-viz-sunset-2: 116 173 209; /* #74ADD1 */
+  --data-viz-sunset-3: 171 217 233; /* #ABD9E9 */
+  --data-viz-sunset-4: 224 243 248; /* #E0F3F8 */
+  --data-viz-sunset-5: 254 254 191; /* #FFFFBF */
+  --data-viz-sunset-6: 254 224 144; /* #FEE090 */
+  --data-viz-sunset-7: 253 174 97; /* #FDAE61 */
+  --data-viz-sunset-8: 244 109 67; /* #F46D43 */
+  --data-viz-sunset-9: 215 48 39; /* #D73027 */
+
+  /* Iridescent - Sequential (11 colors) */
+  --data-viz-iridescent-1: 254 251 233; /* #FEFBE9 */
+  --data-viz-iridescent-2: 252 244 193; /* #FCF4C1 */
+  --data-viz-iridescent-3: 247 231 130; /* #F7E782 */
+  --data-viz-iridescent-4: 238 210 75; /* #EED24F */
+  --data-viz-iridescent-5: 224 187 28; /* #E0BB1C */
+  --data-viz-iridescent-6: 204 153 17; /* #CC9917 */
+  --data-viz-iridescent-7: 181 118 20; /* #B57614 */
+  --data-viz-iridescent-8: 153 87 21; /* #99571C */
+  --data-viz-iridescent-9: 122 58 23; /* #7A3A17 */
+  --data-viz-iridescent-10: 89 32 18; /* #592012 */
+  --data-viz-iridescent-11: 54 8 7; /* #360807 */
+
+  /* YlOrBr - Sequential Agriculture (7 colors) */
+  --data-viz-agriculture-1: 255 255 229; /* #FFFFE5 */
+  --data-viz-agriculture-2: 255 247 188; /* #FFF7BC */
+  --data-viz-agriculture-3: 254 227 145; /* #FEE391 */
+  --data-viz-agriculture-4: 254 196 79; /* #FEC44F */
+  --data-viz-agriculture-5: 254 153 41; /* #FE9929 */
+  --data-viz-agriculture-6: 217 95 14; /* #D95F0E */
+  --data-viz-agriculture-7: 153 52 4; /* #993404 */
+
+  /* Pale - Light, background-friendly (6 colors) */
+  --data-viz-pale-1: 187 204 238; /* #BBCCEE */
+  --data-viz-pale-2: 204 238 221; /* #CCEEDD */
+  --data-viz-pale-3: 221 204 119; /* #DDCC77 */
+  --data-viz-pale-4: 238 187 204; /* #EEBBCC */
+  --data-viz-pale-5: 170 170 170; /* #AAAAAA */
+  --data-viz-pale-6: 255 255 204; /* #FFFFCC */
+
+  /* Incandescent - Heat-like sequential (11 colors) */
+  --data-viz-incandescent-1: 0 0 0; /* #000000 */
+  --data-viz-incandescent-2: 51 0 25; /* #330019 */
+  --data-viz-incandescent-3: 85 0 42; /* #55002A */
+  --data-viz-incandescent-4: 119 0 59; /* #77003B */
+  --data-viz-incandescent-5: 153 0 76; /* #99004C */
+  --data-viz-incandescent-6: 187 0 93; /* #BB005D */
+  --data-viz-incandescent-7: 221 0 110; /* #DD006E */
+  --data-viz-incandescent-8: 255 85 85; /* #FF5555 */
+  --data-viz-incandescent-9: 255 170 85; /* #FFAA55 */
+  --data-viz-incandescent-10: 255 255 85; /* #FFFF55 */
+  --data-viz-incandescent-11: 255 255 255; /* #FFFFFF */
+
+  /* BuRd - Blue to Red diverging (9 colors) */
+  --data-viz-burd-1: 33 102 172; /* #2166AC */
+  --data-viz-burd-2: 103 169 207; /* #67A9CF */
+  --data-viz-burd-3: 209 229 240; /* #D1E5F0 */
+  --data-viz-burd-4: 247 247 247; /* #F7F7F7 */
+  --data-viz-burd-5: 253 219 199; /* #FDBBC7 */
+  --data-viz-burd-6: 244 165 130; /* #F4A582 */
+  --data-viz-burd-7: 214 96 77; /* #D6604D */
+  --data-viz-burd-8: 178 24 43; /* #B2182B */
+  --data-viz-burd-9: 103 0 31; /* #67001F */
+
+  /* PRGn - Purple to Green diverging (9 colors) */
+  --data-viz-prgn-1: 64 0 75; /* #40004B */
+  --data-viz-prgn-2: 118 42 131; /* #762A83 */
+  --data-viz-prgn-3: 153 112 171; /* #9970AB */
+  --data-viz-prgn-4: 194 165 207; /* #C2A5CF */
+  --data-viz-prgn-5: 247 247 247; /* #F7F7F7 */
+  --data-viz-prgn-6: 166 219 160; /* #A6DBA0 */
+  --data-viz-prgn-7: 90 174 97; /* #5AAE61 */
+  --data-viz-prgn-8: 27 120 55; /* #1B7837 */
+  --data-viz-prgn-9: 0 68 27; /* #00441B */
+
+  /* Light - Light categorical (9 colors) */
+  --data-viz-light-1: 119 170 221; /* #77AADD */
+  --data-viz-light-2: 153 221 255; /* #99DDFF */
+  --data-viz-light-3: 68 187 153; /* #44BB99 */
+  --data-viz-light-4: 187 204 51; /* #BBCC33 */
+  --data-viz-light-5: 170 170 0; /* #AAAA00 */
+  --data-viz-light-6: 238 221 136; /* #EEDD88 */
+  --data-viz-light-7: 238 136 102; /* #EE8866 */
+  --data-viz-light-8: 255 170 187; /* #FFAABB */
+  --data-viz-light-9: 221 221 221; /* #DDDDDD */
+
+  /* Paul Tol Gradient Utilities - Sequential Palettes */
+  --gradient-iridescent: linear-gradient(to right, 
+    rgb(var(--data-viz-iridescent-1)), 
+    rgb(var(--data-viz-iridescent-2)), 
+    rgb(var(--data-viz-iridescent-3)), 
+    rgb(var(--data-viz-iridescent-4)), 
+    rgb(var(--data-viz-iridescent-5)), 
+    rgb(var(--data-viz-iridescent-6)), 
+    rgb(var(--data-viz-iridescent-7)), 
+    rgb(var(--data-viz-iridescent-8)), 
+    rgb(var(--data-viz-iridescent-9)), 
+    rgb(var(--data-viz-iridescent-10)), 
+    rgb(var(--data-viz-iridescent-11))
+  );
+
+  --gradient-agriculture: linear-gradient(to right, 
+    rgb(var(--data-viz-agriculture-1)), 
+    rgb(var(--data-viz-agriculture-2)), 
+    rgb(var(--data-viz-agriculture-3)), 
+    rgb(var(--data-viz-agriculture-4)), 
+    rgb(var(--data-viz-agriculture-5)), 
+    rgb(var(--data-viz-agriculture-6)), 
+    rgb(var(--data-viz-agriculture-7))
+  );
+
+  --gradient-incandescent: linear-gradient(to right, 
+    rgb(var(--data-viz-incandescent-1)), 
+    rgb(var(--data-viz-incandescent-2)), 
+    rgb(var(--data-viz-incandescent-3)), 
+    rgb(var(--data-viz-incandescent-4)), 
+    rgb(var(--data-viz-incandescent-5)), 
+    rgb(var(--data-viz-incandescent-6)), 
+    rgb(var(--data-viz-incandescent-7)), 
+    rgb(var(--data-viz-incandescent-8)), 
+    rgb(var(--data-viz-incandescent-9)), 
+    rgb(var(--data-viz-incandescent-10)), 
+    rgb(var(--data-viz-incandescent-11))
+  );
+
+  /* Paul Tol Gradient Utilities - Diverging Palettes */
+  --gradient-sunset: linear-gradient(to right, 
+    rgb(var(--data-viz-sunset-1)), 
+    rgb(var(--data-viz-sunset-2)), 
+    rgb(var(--data-viz-sunset-3)), 
+    rgb(var(--data-viz-sunset-4)), 
+    rgb(var(--data-viz-sunset-5)), 
+    rgb(var(--data-viz-sunset-6)), 
+    rgb(var(--data-viz-sunset-7)), 
+    rgb(var(--data-viz-sunset-8)), 
+    rgb(var(--data-viz-sunset-9))
+  );
+
+  --gradient-burd: linear-gradient(to right, 
+    rgb(var(--data-viz-burd-1)), 
+    rgb(var(--data-viz-burd-2)), 
+    rgb(var(--data-viz-burd-3)), 
+    rgb(var(--data-viz-burd-4)), 
+    rgb(var(--data-viz-burd-5)), 
+    rgb(var(--data-viz-burd-6)), 
+    rgb(var(--data-viz-burd-7)), 
+    rgb(var(--data-viz-burd-8)), 
+    rgb(var(--data-viz-burd-9))
+  );
+
+  --gradient-prgn: linear-gradient(to right, 
+    rgb(var(--data-viz-prgn-1)), 
+    rgb(var(--data-viz-prgn-2)), 
+    rgb(var(--data-viz-prgn-3)), 
+    rgb(var(--data-viz-prgn-4)), 
+    rgb(var(--data-viz-prgn-5)), 
+    rgb(var(--data-viz-prgn-6)), 
+    rgb(var(--data-viz-prgn-7)), 
+    rgb(var(--data-viz-prgn-8)), 
+    rgb(var(--data-viz-prgn-9))
+  );
+
+  --sidebar: var(--slate-900);
+  --sidebar-foreground: var(--neutral-white);
+  --sidebar-primary: var(--blue-500);
+  --sidebar-primary-foreground: var(--neutral-white);
+  --sidebar-accent: var(--slate-950);
+  --sidebar-accent-foreground: var(--neutral-white);
+  --sidebar-border: var(--slate-700);
+  --sidebar-ring: var(--blue-400);
+
+  --radius: 0.375rem; /* 6px - shadcn base radius, matches --radius-md */
+
+  /* Surface Background - Light Mode */
+  --bg-surface-light: var(--gray-50);
+  --bg-surface-medium: var(--gray-100);
+  --bg-surface-dark: var(--gray-200);
+
+  /* Component Background - Light Mode */
+  --bg-component-default: var(--neutral-white);
+  --bg-component-light: var(--slate-50);
+  --bg-component-medium: var(--slate-100);
+  --bg-component-dark: var(--slate-200);
+  --bg-component-darker: var(--slate-300);
+
+  /* Figma Theme Tokens - Light Mode */
+  --bg-surface-inverse: var(--neutral-black);
+  --text-inverse: var(--gray-100);
+  --border-inverted: var(--neutral-white);
+  --border-error: var(--red-500);
+
+  /* Data Table Component Variables - Light Mode */
+  --data-table-background: var(--neutral-white);
+  --data-table-foreground: var(--foreground);
+  --data-table-border: var(--border);
+}
+
+/* Mobile/touch override for control elements
+ * Button font sizes remain stable (12/13/16px) - only heights increase for touch targets
+ * Text-entry fields scale to 16px on mobile to prevent iOS zoom */
+@media (pointer: coarse), (max-width: 767px) {
+  :root {
+    /* Button fonts stay the same - only heights change */
+    --button-font-sm: var(--text-sm); /* 12px - stays stable on mobile */
+    --button-font-default: var(--text-base); /* 13px - stays stable on mobile */
+    --button-font-lg: var(--text-lg); /* 16px - stays stable on mobile */
+
+    /* Text-entry control font scales to prevent iOS zoom */
+    --control-font-entry: 1rem; /* 16px - mobile text entry (prevents zoom on iOS) */
+
+    --control-height-sm: 2.5rem; /* 40px - mobile compact controls */
+    --control-height-md: 2.5rem; /* 40px - mobile standard controls */
+    --control-height-lg: 2.75rem; /* 44px - mobile large controls */
+    --control-size-icon-sm: 2.5rem; /* 40px - mobile compact icon controls */
+    --control-size-icon-md: 2.5rem; /* 40px - mobile standard icon controls */
+    --control-touch-target: 2.5rem; /* 40px - mobile minimum touch target */
+  }
+}
+
+.dark {
+  --background: var(--neutral-black);
+  --foreground: var(--neutral-white);
+
+  --card: var(--background);
+  --card-foreground: var(--foreground);
+
+  --popover: var(--bg-component-default);
+  --popover-foreground: var(--foreground);
+
+  --primary: var(--blue-500);
+  --primary-foreground: var(--neutral-white);
+
+  --secondary: var(--slate-900);
+  --secondary-foreground: var(--slate-200);
+
+  --muted: var(--slate-800);
+  --muted-foreground: var(--slate-400);
+
+  --accent: var(--slate-800);
+  --accent-foreground: var(--foreground);
+
+  --destructive: var(--red-500);
+  --destructive-foreground: var(--neutral-white);
+  --destructive-border: var(--red-800);
+  --destructive-muted: var(--red-400);
+
+  --border: var(--gray-800);
+  --input: var(--slate-700);
+  --ring: var(--blue-600);
+
+  /* Interactive element borders */
+  --border-interactive: var(--slate-700);
+
+  /* Intent color system — dark mode */
+  --intent-success-subtle: var(--green-800);
+  --intent-success-base: var(--green-500);
+  --intent-success-emphasis: var(--green-200);
+
+  --intent-info-subtle: var(--blue-800);
+  --intent-info-base: var(--blue-500);
+  --intent-info-emphasis: var(--blue-200);
+
+  --intent-warning-subtle: var(--orange-800);
+  --intent-warning-base: var(--orange-500);
+  --intent-warning-emphasis: var(--orange-200);
+
+  --intent-danger-subtle: var(--red-800);
+  --intent-danger-base: var(--red-500);
+  --intent-danger-emphasis: var(--red-200);
+
+  --intent-neutral-subtle: var(--slate-800);
+  --intent-neutral-base: var(--slate-500);
+  --intent-neutral-emphasis: var(--slate-200);
+
+  /* Deprecated intent compatibility aliases — dark mode */
+  --info: var(--blue-950);
+  --info-foreground: var(--blue-300);
+  --info-border: var(--blue-800);
+  --info-muted: var(--intent-info-base);
+
+  --default: var(--slate-900);
+  --default-foreground: var(--foreground);
+  --default-border: var(--slate-800);
+  --default-muted: var(--intent-neutral-base);
+
+  --success: var(--green-950);
+  --success-foreground: var(--green-300);
+  --success-border: var(--green-800);
+  --success-muted: var(--intent-success-base);
+
+  --warning: var(--orange-950);
+  --warning-foreground: var(--orange-300);
+  --warning-border: var(--orange-800);
+  --warning-muted: var(--intent-warning-base);
+
+  --alert-destructive: var(--red-950);
+  --alert-destructive-foreground: var(--red-400);
+  --alert-destructive-border: var(--red-800);
+  --alert-destructive-muted: var(--intent-danger-base);
+
+  /* Legacy tag/badge tokens — dark mode (aliased through intent) */
+  --tag-default-bg: var(--intent-neutral-subtle);
+  --tag-default-text: var(--intent-neutral-emphasis);
+  --tag-positive-bg: var(--intent-success-subtle);
+  --tag-positive-text: var(--intent-success-emphasis);
+  --tag-warning-bg: var(--intent-warning-subtle);
+  --tag-warning-text: var(--intent-warning-emphasis);
+  --tag-info-bg: var(--intent-info-subtle);
+  --tag-info-text: var(--intent-info-emphasis);
+  --tag-danger-bg: var(--intent-danger-subtle);
+  --tag-danger-text: var(--intent-danger-emphasis);
+
+  /* Button Component - Dark Mode */
+  --button-primary: var(--primary);
+  --button-primary-foreground: var(--primary-foreground);
+  --button-primary-hover: var(--blue-500);
+  --button-primary-active: var(--blue-400);
+  --button-primary-start: var(--blue-500);
+  --button-primary-end: var(--utility-blue);
+
+  --button-secondary: var(--secondary);
+  --button-secondary-foreground: var(--gray-200);
+  --button-secondary-hover: var(--slate-900);
+  --button-secondary-active: var(--slate-700);
+  --button-secondary-border: var(--slate-700);
+  --button-secondary-start: var(--slate-900);
+  --button-secondary-end: var(--slate-800);
+
+  --button-destructive: var(--red-500);
+  --button-destructive-foreground: var(--destructive-foreground);
+  --button-destructive-hover: var(--red-600);
+  --button-destructive-active: var(--red-700);
+
+  --button-outline: var(--slate-950);
+  --button-outline-foreground: var(--secondary-foreground);
+  --button-outline-hover: var(--slate-900);
+  --button-outline-active: var(--slate-800);
+  --button-outline-hover-foreground: var(--secondary-foreground);
+  --button-outline-border: var(--border-interactive);
+
+  --button-ghost-hover: var(--slate-900);
+  --button-ghost-active: var(--slate-800);
+  --button-ghost-hover-foreground: var(--accent-foreground);
+
+  --button-link: var(--primary);
+  --button-link-hover: var(--blue-400);
+
+  --chart-1: var(--blue-500);
+  --chart-2: var(--blue-400);
+  --chart-3: var(--blue-300);
+  --chart-4: var(--blue-200);
+  --chart-5: var(--blue-100);
+
+  --sidebar: var(--slate-900);
+  --sidebar-foreground: var(--neutral-white);
+  --sidebar-primary: var(--blue-500);
+  --sidebar-primary-foreground: var(--neutral-white);
+  --sidebar-accent: var(--slate-950);
+  --sidebar-accent-foreground: var(--neutral-white);
+  --sidebar-border: var(--slate-700);
+  --sidebar-ring: var(--blue-400);
+
+  --radius: 0.375rem;
+
+  /* Surface Background - Dark Mode */
+  --bg-surface-light: var(--gray-950);
+  --bg-surface-medium: var(--gray-900);
+  --bg-surface-dark: var(--gray-800);
+
+  /* Component Background - Dark Mode */
+  --bg-component-default: var(--gray-950);
+  --bg-component-light: var(--slate-950);
+  --bg-component-medium: var(--slate-900);
+  --bg-component-dark: var(--slate-800);
+  --bg-component-darker: var(--slate-700);
+
+  /* Figma Theme Tokens - Dark Mode */
+  --bg-surface-inverse: var(--neutral-white);
+  --text-inverse: var(--gray-900);
+  --border-inverted: var(--neutral-black);
+  --border-error: var(--red-500);
+
+  /* Data Table Component Variables - Dark Mode */
+  --data-table-background: var(--gray-950);
+  --data-table-foreground: var(--foreground);
+  --data-table-border: var(--border);
+}
+
+@theme inline {
+  /* =============================================================================
+   * CSS VARIABLE MAPPINGS - TAILWIND INTEGRATION
+   * =============================================================================
+   *
+   * This section maps CSS custom properties to Tailwind utilities.
+   * All color variables are defined in :root and .dark selectors above.
+   *
+   * ============================================================================= */
+
+  /* Brand Colors */
+  --color-neutral-white: var(--neutral-white);
+  --color-neutral-black: var(--neutral-black);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-green: var(--brand-green);
+
+  /* Gray Scale (50-950) */
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+  --color-gray-950: var(--gray-950);
+
+  /* Slate Scale (50-950) */
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-slate-200: var(--slate-200);
+  --color-slate-300: var(--slate-300);
+  --color-slate-400: var(--slate-400);
+  --color-slate-500: var(--slate-500);
+  --color-slate-600: var(--slate-600);
+  --color-slate-700: var(--slate-700);
+  --color-slate-800: var(--slate-800);
+  --color-slate-900: var(--slate-900);
+  --color-slate-950: var(--slate-950);
+
+  /* Blue Scale (50-950) */
+  --color-blue-50: var(--blue-50);
+  --color-blue-100: var(--blue-100);
+  --color-blue-200: var(--blue-200);
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-blue-800: var(--blue-800);
+  --color-blue-900: var(--blue-900);
+  --color-blue-950: var(--blue-950);
+
+  /* Green Scale (50-950) */
+  --color-green-50: var(--green-50);
+  --color-green-100: var(--green-100);
+  --color-green-200: var(--green-200);
+  --color-green-300: var(--green-300);
+  --color-green-400: var(--green-400);
+  --color-green-500: var(--green-500);
+  --color-green-600: var(--green-600);
+  --color-green-700: var(--green-700);
+  --color-green-800: var(--green-800);
+  --color-green-900: var(--green-900);
+  --color-green-950: var(--green-950);
+
+  /* Red Scale (50-950) */
+  --color-red-50: var(--red-50);
+  --color-red-100: var(--red-100);
+  --color-red-200: var(--red-200);
+  --color-red-300: var(--red-300);
+  --color-red-400: var(--red-400);
+  --color-red-500: var(--red-500);
+  --color-red-600: var(--red-600);
+  --color-red-700: var(--red-700);
+  --color-red-800: var(--red-800);
+  --color-red-900: var(--red-900);
+  --color-red-950: var(--red-950);
+
+  /* Orange Scale (50-950) */
+  --color-orange-50: var(--orange-50);
+  --color-orange-100: var(--orange-100);
+  --color-orange-200: var(--orange-200);
+  --color-orange-300: var(--orange-300);
+  --color-orange-400: var(--orange-400);
+  --color-orange-500: var(--orange-500);
+  --color-orange-600: var(--orange-600);
+  --color-orange-700: var(--orange-700);
+  --color-orange-800: var(--orange-800);
+  --color-orange-900: var(--orange-900);
+  --color-orange-950: var(--orange-950);
+
+  /* Semantic Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Interactive element borders */
+  --color-border-interactive: var(--border-interactive);
+
+  /* Figma semantic token Tailwind mappings */
+  --color-surface-inverse: var(--bg-surface-inverse);
+  --color-foreground-inverse: var(--text-inverse);
+  --color-border-inverted: var(--border-inverted);
+  --color-border-error: var(--border-error);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-muted: var(--destructive-muted);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-border: var(--info-border);
+  --color-info-muted: var(--info-muted);
+
+  --color-default: var(--default);
+  --color-default-foreground: var(--default-foreground);
+  --color-default-border: var(--default-border);
+  --color-default-muted: var(--default-muted);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-border: var(--success-border);
+  --color-success-muted: var(--success-muted);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-border: var(--warning-border);
+  --color-warning-muted: var(--warning-muted);
+
+  --color-alert-destructive: var(--alert-destructive);
+  --color-alert-destructive-foreground: var(--alert-destructive-foreground);
+  --color-alert-destructive-border: var(--alert-destructive-border);
+  --color-alert-destructive-muted: var(--alert-destructive-muted);
+
+  /* Tag/Badge Colors */
+  --color-tag-default-bg: var(--tag-default-bg);
+  --color-tag-default-text: var(--tag-default-text);
+  --color-tag-positive-bg: var(--tag-positive-bg);
+  --color-tag-positive-text: var(--tag-positive-text);
+  --color-tag-warning-bg: var(--tag-warning-bg);
+  --color-tag-warning-text: var(--tag-warning-text);
+  --color-tag-info-bg: var(--tag-info-bg);
+  --color-tag-info-text: var(--tag-info-text);
+  --color-tag-danger-bg: var(--tag-danger-bg);
+  --color-tag-danger-text: var(--tag-danger-text);
+
+  /* Intent Colors */
+  --color-intent-success-subtle: var(--intent-success-subtle);
+  --color-intent-success-base: var(--intent-success-base);
+  --color-intent-success-emphasis: var(--intent-success-emphasis);
+  --color-intent-info-subtle: var(--intent-info-subtle);
+  --color-intent-info-base: var(--intent-info-base);
+  --color-intent-info-emphasis: var(--intent-info-emphasis);
+  --color-intent-warning-subtle: var(--intent-warning-subtle);
+  --color-intent-warning-base: var(--intent-warning-base);
+  --color-intent-warning-emphasis: var(--intent-warning-emphasis);
+  --color-intent-danger-subtle: var(--intent-danger-subtle);
+  --color-intent-danger-base: var(--intent-danger-base);
+  --color-intent-danger-emphasis: var(--intent-danger-emphasis);
+  --color-intent-neutral-subtle: var(--intent-neutral-subtle);
+  --color-intent-neutral-base: var(--intent-neutral-base);
+  --color-intent-neutral-emphasis: var(--intent-neutral-emphasis);
+
+  /* Button Colors */
+  --color-button-primary: var(--button-primary);
+  --color-button-primary-foreground: var(--button-primary-foreground);
+  --color-button-primary-hover: var(--button-primary-hover);
+  --color-button-primary-start: var(--button-primary-start);
+  --color-button-primary-end: var(--button-primary-end);
+
+  --color-button-secondary: var(--button-secondary);
+  --color-button-secondary-foreground: var(--button-secondary-foreground);
+  --color-button-secondary-hover: var(--button-secondary-hover);
+  --color-button-secondary-border: var(--button-secondary-border);
+  --color-button-secondary-start: var(--button-secondary-start);
+  --color-button-secondary-end: var(--button-secondary-end);
+
+  --color-button-destructive: var(--button-destructive);
+  --color-button-destructive-foreground: var(--button-destructive-foreground);
+  --color-button-destructive-hover: var(--button-destructive-hover);
+
+  --color-button-outline: var(--button-outline);
+  --color-button-outline-foreground: var(--button-outline-foreground);
+  --color-button-outline-border: var(--button-outline-border);
+  --color-button-outline-hover: var(--button-outline-hover);
+  --color-button-outline-hover-foreground: var(
+    --button-outline-hover-foreground
+  );
+
+  --color-button-ghost-hover: var(--button-ghost-hover);
+  --color-button-ghost-hover-foreground: var(--button-ghost-hover-foreground);
+
+  --color-button-link: var(--button-link);
+  --color-button-link-hover: var(--button-link-hover);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Data Table Colors */
+  --color-data-table-background: var(--data-table-background);
+  --color-data-table-foreground: var(--data-table-foreground);
+  --color-data-table-border: var(--data-table-border);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-base: var(--text-base);
+  --text-md: var(--text-md);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-2xl: var(--text-2xl);
+  --text-3xl: var(--text-3xl);
+  --text-4xl: var(--text-4xl);
+  --text-5xl: var(--text-5xl);
+
+  /* Tailwind v4 line-height variable contract - ensures ECO line-heights win */
+  --text-xs--line-height: var(--text-xs-line-height);
+  --text-sm--line-height: var(--text-sm-line-height);
+  --text-base--line-height: var(--text-base-line-height);
+  --text-md--line-height: var(--text-md-line-height);
+  --text-lg--line-height: var(--text-lg-line-height);
+  --text-xl--line-height: var(--text-xl-line-height);
+  --text-2xl--line-height: var(--text-2xl-line-height);
+  --text-3xl--line-height: var(--text-3xl-line-height);
+  --text-4xl--line-height: var(--text-4xl-line-height);
+  --text-5xl--line-height: var(--text-5xl-line-height);
+
+  /* Text utility line-heights matching ECO product scale */
+  --text-xs-line-height: 1rem; /* 16px */
+  --text-sm-line-height: 1rem; /* 16px */
+  --text-base-line-height: 1.125rem; /* 18px */
+  --text-md-line-height: 1.25rem; /* 20px */
+  --text-lg-line-height: 1.25rem; /* 20px */
+  --text-xl-line-height: 1.5rem; /* 24px */
+  --text-2xl-line-height: 1.5rem; /* 24px */
+  --text-3xl-line-height: 1.75rem; /* 28px */
+  --text-4xl-line-height: 2rem; /* 32px */
+  --text-5xl-line-height: 2rem; /* 32px - framework compat */
+
+  --radius-none: 0px;
+  --radius-xs: 0.125rem; /* 2px */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-3xl: 1.5rem; /* 24px */
+  --radius-4xl: 2rem; /* 32px */
+  --radius-full: 9999px;
+
+  --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px
+    rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px
+    rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* Utility classes */
+  --border-interactive: var(--border-interactive);
+  --utility-blue: #0072c9;
+
+  /* Component Backgrounds */
+  --color-component-default: var(--bg-component-default);
+  --color-component-light: var(--bg-component-light);
+  --color-component-medium: var(--bg-component-medium);
+  --color-component-dark: var(--bg-component-dark);
+  --color-component-darker: var(--bg-component-darker);
+
+  /* Surface Backgrounds */
+  --color-surface-light: var(--bg-surface-light);
+  --color-surface-medium: var(--bg-surface-medium);
+  --color-surface-dark: var(--bg-surface-dark);
+
+  /* Data Visualization Colors */
+  --color-data-viz-bright-1: var(--data-viz-bright-1);
+  --color-data-viz-bright-2: var(--data-viz-bright-2);
+  --color-data-viz-bright-3: var(--data-viz-bright-3);
+  --color-data-viz-bright-4: var(--data-viz-bright-4);
+  --color-data-viz-bright-5: var(--data-viz-bright-5);
+  --color-data-viz-bright-6: var(--data-viz-bright-6);
+  --color-data-viz-bright-7: var(--data-viz-bright-7);
+
+  --color-data-viz-muted-1: var(--data-viz-muted-1);
+  --color-data-viz-muted-2: var(--data-viz-muted-2);
+  --color-data-viz-muted-3: var(--data-viz-muted-3);
+  --color-data-viz-muted-4: var(--data-viz-muted-4);
+  --color-data-viz-muted-5: var(--data-viz-muted-5);
+  --color-data-viz-muted-6: var(--data-viz-muted-6);
+  --color-data-viz-muted-7: var(--data-viz-muted-7);
+  --color-data-viz-muted-8: var(--data-viz-muted-8);
+  --color-data-viz-muted-9: var(--data-viz-muted-9);
+
+  --color-data-viz-sunset-1: var(--data-viz-sunset-1);
+  --color-data-viz-sunset-2: var(--data-viz-sunset-2);
+  --color-data-viz-sunset-3: var(--data-viz-sunset-3);
+  --color-data-viz-sunset-4: var(--data-viz-sunset-4);
+  --color-data-viz-sunset-5: var(--data-viz-sunset-5);
+  --color-data-viz-sunset-6: var(--data-viz-sunset-6);
+  --color-data-viz-sunset-7: var(--data-viz-sunset-7);
+  --color-data-viz-sunset-8: var(--data-viz-sunset-8);
+  --color-data-viz-sunset-9: var(--data-viz-sunset-9);
+
+  --color-data-viz-iridescent-1: var(--data-viz-iridescent-1);
+  --color-data-viz-iridescent-2: var(--data-viz-iridescent-2);
+  --color-data-viz-iridescent-3: var(--data-viz-iridescent-3);
+  --color-data-viz-iridescent-4: var(--data-viz-iridescent-4);
+  --color-data-viz-iridescent-5: var(--data-viz-iridescent-5);
+  --color-data-viz-iridescent-6: var(--data-viz-iridescent-6);
+  --color-data-viz-iridescent-7: var(--data-viz-iridescent-7);
+  --color-data-viz-iridescent-8: var(--data-viz-iridescent-8);
+  --color-data-viz-iridescent-9: var(--data-viz-iridescent-9);
+  --color-data-viz-iridescent-10: var(--data-viz-iridescent-10);
+  --color-data-viz-iridescent-11: var(--data-viz-iridescent-11);
+
+  --color-data-viz-agriculture-1: var(--data-viz-agriculture-1);
+  --color-data-viz-agriculture-2: var(--data-viz-agriculture-2);
+  --color-data-viz-agriculture-3: var(--data-viz-agriculture-3);
+  --color-data-viz-agriculture-4: var(--data-viz-agriculture-4);
+  --color-data-viz-agriculture-5: var(--data-viz-agriculture-5);
+  --color-data-viz-agriculture-6: var(--data-viz-agriculture-6);
+  --color-data-viz-agriculture-7: var(--data-viz-agriculture-7);
+
+  --color-data-viz-pale-1: var(--data-viz-pale-1);
+  --color-data-viz-pale-2: var(--data-viz-pale-2);
+  --color-data-viz-pale-3: var(--data-viz-pale-3);
+  --color-data-viz-pale-4: var(--data-viz-pale-4);
+  --color-data-viz-pale-5: var(--data-viz-pale-5);
+  --color-data-viz-pale-6: var(--data-viz-pale-6);
+
+  --color-data-viz-incandescent-1: var(--data-viz-incandescent-1);
+  --color-data-viz-incandescent-2: var(--data-viz-incandescent-2);
+  --color-data-viz-incandescent-3: var(--data-viz-incandescent-3);
+  --color-data-viz-incandescent-4: var(--data-viz-incandescent-4);
+  --color-data-viz-incandescent-5: var(--data-viz-incandescent-5);
+  --color-data-viz-incandescent-6: var(--data-viz-incandescent-6);
+  --color-data-viz-incandescent-7: var(--data-viz-incandescent-7);
+  --color-data-viz-incandescent-8: var(--data-viz-incandescent-8);
+  --color-data-viz-incandescent-9: var(--data-viz-incandescent-9);
+  --color-data-viz-incandescent-10: var(--data-viz-incandescent-10);
+  --color-data-viz-incandescent-11: var(--data-viz-incandescent-11);
+
+  --color-data-viz-burd-1: var(--data-viz-burd-1);
+  --color-data-viz-burd-2: var(--data-viz-burd-2);
+  --color-data-viz-burd-3: var(--data-viz-burd-3);
+  --color-data-viz-burd-4: var(--data-viz-burd-4);
+  --color-data-viz-burd-5: var(--data-viz-burd-5);
+  --color-data-viz-burd-6: var(--data-viz-burd-6);
+  --color-data-viz-burd-7: var(--data-viz-burd-7);
+  --color-data-viz-burd-8: var(--data-viz-burd-8);
+  --color-data-viz-burd-9: var(--data-viz-burd-9);
+
+  --color-data-viz-prgn-1: var(--data-viz-prgn-1);
+  --color-data-viz-prgn-2: var(--data-viz-prgn-2);
+  --color-data-viz-prgn-3: var(--data-viz-prgn-3);
+  --color-data-viz-prgn-4: var(--data-viz-prgn-4);
+  --color-data-viz-prgn-5: var(--data-viz-prgn-5);
+  --color-data-viz-prgn-6: var(--data-viz-prgn-6);
+  --color-data-viz-prgn-7: var(--data-viz-prgn-7);
+  --color-data-viz-prgn-8: var(--data-viz-prgn-8);
+  --color-data-viz-prgn-9: var(--data-viz-prgn-9);
+
+  --color-data-viz-light-1: var(--data-viz-light-1);
+  --color-data-viz-light-2: var(--data-viz-light-2);
+  --color-data-viz-light-3: var(--data-viz-light-3);
+  --color-data-viz-light-4: var(--data-viz-light-4);
+  --color-data-viz-light-5: var(--data-viz-light-5);
+  --color-data-viz-light-6: var(--data-viz-light-6);
+  --color-data-viz-light-7: var(--data-viz-light-7);
+  --color-data-viz-light-8: var(--data-viz-light-8);
+  --color-data-viz-light-9: var(--data-viz-light-9);
+
+  /* Paul Tol Gradient Utilities */
+  --gradient-iridescent: var(--gradient-iridescent);
+  --gradient-agriculture: var(--gradient-agriculture);
+  --gradient-incandescent: var(--gradient-incandescent);
+  --gradient-sunset: var(--gradient-sunset);
+  --gradient-burd: var(--gradient-burd);
+  --gradient-prgn: var(--gradient-prgn);
+  --radius: 0.375rem;
+}
+
+@layer utilities {
+  .border-interactive {
+    border-color: var(--border-interactive);
+  }
+
+  /* Surface Background Utilities */
+  .bg-surface-light {
+    background-color: var(--bg-surface-light);
+  }
+
+  .bg-surface-medium {
+    background-color: var(--bg-surface-medium);
+  }
+
+  .bg-surface-dark {
+    background-color: var(--bg-surface-dark);
+  }
+
+  /* Component Background Utilities */
+  .bg-component-default {
+    background-color: var(--bg-component-default);
+  }
+
+  .bg-component-light {
+    background-color: var(--bg-component-light);
+  }
+
+  .bg-component-medium {
+    background-color: var(--bg-component-medium);
+  }
+
+  .bg-component-dark {
+    background-color: var(--bg-component-dark);
+  }
+
+  .bg-component-darker {
+    background-color: var(--bg-component-darker);
+  }
+
+  /* Pixel Pattern Background */
+  .bg-pixel-pattern {
+    background-image: radial-gradient(
+      circle,
+      rgba(0, 0, 0, 0.05) 1px,
+      transparent 1px
+    );
+    background-size: 4px 4px;
+  }
+
+  .dark .bg-pixel-pattern {
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    );
+  }
+}
+
+/* Sidebar overlay mode for hover expansion */
+.sidebar-overlay-mode [data-slot="sidebar-gap"] {
+  width: var(--sidebar-width-icon);
+}
+
+.sidebar-overlay-mode [data-slot="sidebar-container"] {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  z-index: 60;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(0);
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Enhanced sidebar transitions for smoother hover behavior */
+[data-slot="sidebar-gap"] {
+  transition: width 0.3s ease-in-out !important;
+}
+
+[data-slot="sidebar-container"] {
+  transition: left 0.3s ease-in-out, right 0.3s ease-in-out, width 0.3s
+    ease-in-out !important;
+}
+
+/* =============================================================================
+ * SCROLL FADE UTILITY
+ * =============================================================================
+ *
+ * Utilities for adding a fade effect to the edges of a scroll container.
+ * Source: https://ui.shadcn.com/docs/utils/scroll-fade
+ *
+ * Available classes:
+ * - scroll-fade        Fade both top and bottom edges (block axis)
+ * - scroll-fade-y      Same as scroll-fade (vertical/block axis)
+ * - scroll-fade-x      Fade both left and right edges (inline axis)
+ * - scroll-fade-t      Fade top edge only
+ * - scroll-fade-b      Fade bottom edge only
+ * - scroll-fade-l      Fade left edge only
+ * - scroll-fade-r      Fade right edge only
+ * - scroll-fade-s      Fade inline-start edge only (RTL-aware)
+ * - scroll-fade-e      Fade inline-end edge only (RTL-aware)
+ * - scroll-fade-none   Disable fade mask
+ * - scroll-fade-{n}    Set fade size using spacing scale (e.g. scroll-fade-8)
+ * - scroll-fade-t-{n}, scroll-fade-b-{n}, scroll-fade-s-{n}, scroll-fade-e-{n}
+ *                      Per-edge size overrides
+ *
+ * Usage: Apply to an overflow scroll container, e.g.:
+ *   <div className="h-64 overflow-y-auto scroll-fade">...</div>
+ */
+
+/* Scroll fade custom properties */
+@property --scroll-fade-t {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-b {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-s {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-e {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --scroll-fade-mask {
+  syntax: "*";
+  inherits: false;
+}
+
+/* ECO Product Typography Utilities with Line Heights */
+@utility text-xs {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs-line-height);
+}
+
+@utility text-sm {
+  font-size: var(--text-sm);
+  line-height: var(--text-sm-line-height);
+}
+
+@utility text-base {
+  font-size: var(--text-base);
+  line-height: var(--text-base-line-height);
+}
+
+@utility text-md {
+  font-size: var(--text-md);
+  line-height: var(--text-md-line-height);
+}
+
+@utility text-lg {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg-line-height);
+}
+
+@utility text-xl {
+  font-size: var(--text-xl);
+  line-height: var(--text-xl-line-height);
+}
+
+@utility text-2xl {
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl-line-height);
+}
+
+@utility text-3xl {
+  font-size: var(--text-3xl);
+  line-height: var(--text-3xl-line-height);
+}
+
+@utility text-4xl {
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl-line-height);
+}
+
+@utility text-5xl {
+  font-size: var(--text-5xl);
+  line-height: var(--text-5xl-line-height);
+}
+
+@theme inline {
+  @keyframes scroll-fade-reveal-t {
+    from {
+      --scroll-fade-t: 0px;
+    }
+    to {
+      --scroll-fade-t: var(--_scroll-fade-size-t, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+  }
+  @keyframes scroll-fade-reveal-b {
+    from {
+      --scroll-fade-b: var(--_scroll-fade-size-b, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+    to {
+      --scroll-fade-b: 0px;
+    }
+  }
+  @keyframes scroll-fade-reveal-s {
+    from {
+      --scroll-fade-s: 0px;
+    }
+    to {
+      --scroll-fade-s: var(--_scroll-fade-size-s, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+  }
+  @keyframes scroll-fade-reveal-e {
+    from {
+      --scroll-fade-e: var(--_scroll-fade-size-e, var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10))));
+    }
+    to {
+      --scroll-fade-e: 0px;
+    }
+  }
+}
+
+@utility scroll-fade {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-block: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-t 1ms ease-in-out,
+      scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y), scroll(self y);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-y {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-block: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-block));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-t 1ms ease-in-out,
+      scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y), scroll(self y);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-x {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-inline: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-inline: linear-gradient(
+      to left,
+      transparent 0,
+      #000 var(--scroll-fade-s, 0px),
+      #000 calc(100% - var(--scroll-fade-e, 0px)),
+      transparent 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation:
+      scroll-fade-reveal-s 1ms ease-in-out,
+      scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0 var(--scroll-fade-reveal, calc(var(--spacing) * 24)),
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-t {
+  --_scroll-fade-size-t: var(
+    --scroll-fade-t-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-t, 0px),
+    #000 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-t 1ms ease-in-out;
+    animation-timeline: scroll(self y);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-t: var(--_scroll-fade-size-t);
+  }
+}
+
+@utility scroll-fade-b {
+  --_scroll-fade-size-b: var(
+    --scroll-fade-b-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-b, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-b 1ms ease-in-out;
+    animation-timeline: scroll(self y);
+    animation-range:
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-b: var(--_scroll-fade-size-b);
+  }
+}
+
+@utility scroll-fade-l {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-s 1ms ease-in-out;
+    animation-timeline: scroll(self x);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+  }
+}
+
+@utility scroll-fade-r {
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self x);
+    animation-range:
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-s {
+  --_scroll-fade-size-s: var(
+    --scroll-fade-s-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-mask: linear-gradient(
+      to left,
+      transparent 0,
+      #000 var(--scroll-fade-s, 0px),
+      #000 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-s 1ms ease-in-out;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--scroll-fade-reveal, calc(var(--spacing) * 24));
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+  }
+}
+
+@utility scroll-fade-e {
+  --_scroll-fade-size-e: var(
+    --scroll-fade-e-size,
+    var(--scroll-fade-size, min(12%, calc(var(--spacing) * 10)))
+  );
+  --scroll-fade-mask: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  &:where([dir="rtl"], [dir="rtl"] *) {
+    --scroll-fade-mask: linear-gradient(
+      to left,
+      #000 0,
+      #000 calc(100% - var(--scroll-fade-e, 0px)),
+      transparent 100%
+    );
+  }
+  -webkit-mask-image: var(--scroll-fade-mask);
+  mask-image: var(--scroll-fade-mask);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self inline);
+    animation-range:
+      calc(100% - var(--scroll-fade-reveal, calc(var(--spacing) * 24))) 100%;
+    animation-fill-mode: both;
+  }
+
+  @supports not (animation-timeline: scroll()) {
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+@utility scroll-fade-* {
+  --scroll-fade-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-t-* {
+  --scroll-fade-t-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-t-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-b-* {
+  --scroll-fade-b-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-b-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-s-* {
+  --scroll-fade-s-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-s-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-e-* {
+  --scroll-fade-e-size: calc(var(--spacing) * --value(integer));
+  --scroll-fade-e-size: --value([length], [percentage]);
+}
+
+@utility scroll-fade-none {
+  --scroll-fade-mask: none;
+}
+
+/* Hides the scrollbar track while keeping the container scrollable.
+ * Used by Tabs and TabsClassic to allow horizontal overflow scrolling
+ * without a visible scrollbar track disrupting the compact visual layout. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
