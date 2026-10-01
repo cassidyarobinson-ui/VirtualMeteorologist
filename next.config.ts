@@ -1,5 +1,30 @@
 import type { NextConfig } from "next";
 
+// Derive the base path from GitLab's CI_PAGES_URL at build time so it always
+// matches wherever Pages actually serves the site — whether that's a subpath
+// (https://user.gitlab.io/Project/) or a unique domain served from root
+// (https://project-hash.gitlab.io/). This avoids hardcoding a path that may
+// not match GitLab's "unique domain" setting.
+//
+// CI_PAGES_URL examples:
+//   https://cassidar.gitlab.io/DTN_Meteorologist  -> basePath "/DTN_Meteorologist"
+//   https://dtn-meteorologist-abc123.gitlab.io    -> basePath "" (served at root)
+//
+// BASE_PATH env var still wins if set explicitly (local/other hosts).
+function resolveBasePath(): string {
+  if (process.env.BASE_PATH !== undefined) return process.env.BASE_PATH;
+  const pagesUrl = process.env.CI_PAGES_URL;
+  if (!pagesUrl) return "";
+  try {
+    const path = new URL(pagesUrl).pathname.replace(/\/$/, "");
+    return path === "/" ? "" : path;
+  } catch {
+    return "";
+  }
+}
+
+const basePath = resolveBasePath();
+
 const nextConfig: NextConfig = {
   // Static export so the app can be served from GitLab Pages (static host).
   // The app is a client-side mock (localStorage + mocked data, no server
@@ -9,10 +34,10 @@ const nextConfig: NextConfig = {
   // directory-style URLs. Without this, routes export as <route>.html and
   // Pages bounces between /route and /route/ (redirect loop).
   trailingSlash: true,
-  // GitLab Pages serves project sites under /<project-name>/, so the app must
-  // know it lives at /DTN_Meteorologist (not the domain root) for its CSS/JS
-  // and links to resolve. Overridable via BASE_PATH for other hosts.
-  basePath: process.env.BASE_PATH ?? "/DTN_Meteorologist",
+  // Computed from CI_PAGES_URL (see resolveBasePath above) so CSS/JS and links
+  // resolve correctly regardless of GitLab's Pages URL scheme.
+  basePath: basePath || undefined,
+  assetPrefix: basePath || undefined,
   images: {
     // next/image optimization needs a server; disable it for static export.
     unoptimized: true,
