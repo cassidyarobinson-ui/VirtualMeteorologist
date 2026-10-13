@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -11,8 +12,15 @@ import { ChatTranscript } from "./chat-transcript";
 import { PanelComposer } from "./panel-composer";
 import { NewPromptDialog, NewPromptValues } from "./new-prompt-dialog";
 import { ManagePromptsDialog } from "./manage-prompts-dialog";
+import { ManagePersonasDialog } from "./manage-personas-dialog";
+import { PersonaDialog, PersonaFormValues } from "./persona-dialog";
+import {
+  VariableFillDialog,
+  VariableFillRequest,
+} from "./variable-fill-dialog";
 import { UsageView } from "./usage-view";
 import { usePrompts } from "@/hooks/use-prompts";
+import { usePersonas } from "@/hooks/use-personas";
 import {
   SavedPrompt,
   ChatMessage,
@@ -21,6 +29,14 @@ import {
   SUGGESTED_ASSET_PROMPTS,
   SUGGESTED_LOCATION_PROMPTS,
 } from "@/lib/prompts";
+import {
+  Persona,
+  PromptTemplate,
+  getDefaultPersona,
+  parseVariables,
+  applyVariables,
+  FEATURED_PERSONAS,
+} from "@/lib/personas";
 import { Sparkles, Info, X, Gauge, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,40 +63,133 @@ export function MeteorologistPanel() {
     markRun,
   } = usePrompts();
 
+  const {
+    personas,
+    templates,
+    addPersona,
+    editPersona,
+    deletePersona,
+    duplicatePersona,
+  } = usePersonas();
+
   const [view, setView] = useState<PanelView>("chat");
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [composerText, setComposerText] = useState("");
 
-  // New/Save prompt dialog. `draft` seeds the dialog when saving from a bubble.
+  // Active persona for this thread. Seeded to the default (Virtual
+  // Meteorologist) so a persona is always running out of the box — the mocked
+  // equivalent of injecting system_instructions into the LLM call and keeping
+  // it persistent across turns.
+  const [activePersonaId, setActivePersonaId] = useState<string>(
+    () => getDefaultPersona(FEATURED_PERSONAS)?.id ?? "",
+  );
+  const activePersona =
+    personas.find((p) => p.id === activePersonaId) ??
+    getDefaultPersona(personas);
+
+  // Dialog state
   const [newPromptOpen, setNewPromptOpen] = useState(false);
   const [draft, setDraft] = useState<NewPromptValues | undefined>();
-
   const [manageOpen, setManageOpen] = useState(false);
+  const [managePersonasOpen, setManagePersonasOpen] = useState(false);
+  const [newPersonaOpen, setNewPersonaOpen] = useState(false);
+  const [varRequest, setVarRequest] = useState<VariableFillRequest | null>(null);
+
+  // --- Chat (mocked execution flow) ------------------------------------------
 
   function sendUser(text: string) {
+    const persona = activePersona;
+    // Mocked "backend": the active persona's system instructions are the
+    // context the model would run under; we reflect that in the reply so the
+    // persistence is visible. A real impl would inject persona.systemInstructions
+    // into the system prompt and keep it across every turn in this thread.
+    const sysNote = persona
+      ? `Responding as ${persona.title} (temp ${persona.defaultParameters.temperature}, ${persona.defaultParameters.model}).`
+      : "No persona active.";
     setMessages((prev) => [
       ...prev,
       createMessage("user", text),
       createMessage(
         "assistant",
-        "Thought process (reasoning, 1 tool call)\n\nHere's what I found for your question. (This is a mock response — wire the Virtual Meteorologist model here.)",
+        `${sysNote}\n\nHere's what I found for your question. (This is a mock response — the active persona's system instructions would ground the real model here.)`,
       ),
     ]);
   }
 
-  function runSaved(p: SavedPrompt) {
+  function runSavedNow(p: SavedPrompt) {
     markRun(p.id);
     setView("chat");
     sendUser(p.prompt);
     toast.success(`Running "${p.title}"`);
   }
 
-  // Save-from-bubble: open the New Prompt dialog pre-populated.
+  function loadIntoComposer(text: string) {
+    setView("chat");
+    setComposerText(text);
+  }
+
+  function loadSaved(p: SavedPrompt) {
+    markRun(p.id);
+    loadIntoComposer(p.prompt);
+  }
+
+  // --- Personas --------------------------------------------------------------
+
+  /** Activate a persona for the thread (via @mention or the Gems launcher). */
+  function activatePersona(p: Persona) {
+    setActivePersonaId(p.id);
+    setView("chat");
+    toast.success(`Active persona: ${p.title}`);
+  }
+
+  function handleCreatePersona(values: PersonaFormValues) {
+    const created = addPersona({
+      title: values.title,
+      description: values.description,
+      systemInstructions: values.systemInstructions,
+      defaultParameters: values.defaultParameters,
+      isPublic: values.isPublic,
+      isShared: values.isShared,
+    });
+    setActivePersonaId(created.id);
+  }
+
+  function handleEditPersona(id: string, values: PersonaFormValues) {
+    editPersona(id, {
+      title: values.title,
+      description: values.description,
+      systemInstructions: values.systemInstructions,
+      defaultParameters: values.defaultParameters,
+      isPublic: values.isPublic,
+      isShared: values.isShared,
+    });
+  }
+
+  // --- Templates -------------------------------------------------------------
+
+  /** Insert a template into the composer, prompting for {{variables}} first. */
+  function insertTemplate(t: PromptTemplate) {
+    const vars = parseVariables(t.templateText);
+    if (vars.length > 0) {
+      setVarRequest({ title: t.title, text: t.templateText, variables: vars });
+      return;
+    }
+    loadIntoComposer(t.templateText);
+  }
+
+  function handleVariablesFilled(values: Record<string, string>) {
+    if (!varRequest) return;
+    loadIntoComposer(applyVariables(varRequest.text, values));
+    setVarRequest(null);
+  }
+
+  // --- Saved prompts ---------------------------------------------------------
+
   function openSaveFromBubble(text: string) {
     setDraft({ name: deriveTitle(text), prompt: text, isFavorite: false });
     setNewPromptOpen(true);
   }
 
-  // New prompt from the library menu / manage dialog: empty dialog.
   function openNewPrompt() {
     setDraft(undefined);
     setManageOpen(false);
@@ -164,6 +273,25 @@ export function MeteorologistPanel() {
         </div>
       </div>
 
+      {/* Active persona indicator — shows which system-instruction set is
+          running for this thread. Click to manage/switch. */}
+      {view === "chat" && activePersona && (
+        <button
+          type="button"
+          onClick={() => setManagePersonasOpen(true)}
+          className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5 text-left transition-colors hover:bg-muted/70"
+        >
+          <Sparkles className="size-3.5 shrink-0 text-primary" />
+          <span className="text-xs text-muted-foreground">Active persona</span>
+          <Badge variant="secondary" className="text-[11px]">
+            {activePersona.title}
+          </Badge>
+          <span className="ml-auto text-[11px] text-muted-foreground">
+            Change
+          </span>
+        </button>
+      )}
+
       {/* Body */}
       {view === "usage" ? (
         <div className="min-h-0 flex-1 overflow-y-auto scroll-fade-y px-3 py-4">
@@ -177,12 +305,15 @@ export function MeteorologistPanel() {
               <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Sparkles className="size-5" />
               </div>
-              <h4 className="text-foreground">Virtual Meteorologist</h4>
+              <h4 className="text-foreground">
+                {activePersona?.title ?? "Virtual Meteorologist"}
+              </h4>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Your AI-powered weather consultant. Ask about forecasts,
-                current conditions, and alerts for your assets. Hover a message
-                to save it as a prompt, or open the prompt library beside the
-                input.
+                {activePersona?.description ??
+                  "Your AI-powered weather consultant."}{" "}
+                Type <span className="font-medium">@</span> to switch persona or{" "}
+                <span className="font-medium">/</span> to insert a prompt
+                template. Hover a message to save it.
               </p>
             </div>
 
@@ -198,7 +329,7 @@ export function MeteorologistPanel() {
                 <SuggestionGroup
                   label="Try asking"
                   items={SUGGESTED_ASSET_PROMPTS}
-                  onPick={sendUser}
+                  onPick={loadIntoComposer}
                 />
                 <div className="flex items-center gap-3 px-1">
                   <span className="h-px flex-1 bg-border" />
@@ -210,18 +341,26 @@ export function MeteorologistPanel() {
                 <SuggestionGroup
                   label="Try asking"
                   items={SUGGESTED_LOCATION_PROMPTS}
-                  onPick={sendUser}
+                  onPick={loadIntoComposer}
                 />
               </div>
             )}
           </div>
 
           <PanelComposer
+            value={composerText}
+            onChange={setComposerText}
             onSend={sendUser}
             prompts={prompts}
-            onRunSaved={runSaved}
+            onLoadSaved={loadSaved}
             onNewPrompt={openNewPrompt}
             onManage={() => setManageOpen(true)}
+            personas={personas}
+            templates={templates}
+            onActivatePersona={activatePersona}
+            onInsertTemplate={insertTemplate}
+            onNewPersona={() => setNewPersonaOpen(true)}
+            onManagePersonas={() => setManagePersonasOpen(true)}
           />
         </>
       )}
@@ -239,11 +378,41 @@ export function MeteorologistPanel() {
         open={manageOpen}
         onOpenChange={setManageOpen}
         prompts={prompts}
-        onRun={runSaved}
+        onRun={runSavedNow}
         onEdit={editPrompt}
         onDelete={deletePrompt}
         onToggleFavorite={toggleFavorite}
         onNewPrompt={openNewPrompt}
+      />
+
+      {/* Manage personas / Gems */}
+      <ManagePersonasDialog
+        open={managePersonasOpen}
+        onOpenChange={setManagePersonasOpen}
+        personas={personas}
+        activePersonaId={activePersona?.id}
+        onLaunch={activatePersona}
+        onCreate={handleCreatePersona}
+        onEdit={handleEditPersona}
+        onDuplicate={duplicatePersona}
+        onDelete={deletePersona}
+      />
+
+      {/* New persona (from composer Gems menu) */}
+      <PersonaDialog
+        open={newPersonaOpen}
+        onOpenChange={setNewPersonaOpen}
+        onSubmit={(v) => {
+          handleCreatePersona(v);
+          toast.success(`Created "${v.title}"`);
+        }}
+      />
+
+      {/* Variable fill for templates with {{placeholders}} */}
+      <VariableFillDialog
+        request={varRequest}
+        onOpenChange={(o) => !o && setVarRequest(null)}
+        onSubmit={handleVariablesFilled}
       />
     </aside>
   );

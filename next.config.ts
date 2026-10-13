@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
   // Allow the dev server's HMR / _next resources to be loaded when the app is
   // viewed through a tunnel (Cloudflare quick tunnel) for sharing locally.
   allowedDevOrigins: [
-    "deluxe-whom-brunette-power.trycloudflare.com",
+    "professionals-proceedings-cookbook-shoot.trycloudflare.com",
     "*.trycloudflare.com",
   ],
 };

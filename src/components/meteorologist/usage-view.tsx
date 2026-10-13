@@ -74,7 +74,7 @@ export function UsageView() {
         </p>
       </div>
 
-      {/* Weekly limit remaining — ring + copy, matching the screenshot */}
+      {/* Weekly limit remaining — ring + copy + time to reset */}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-4">
           <UsageRing percent={remaining} />
@@ -83,41 +83,39 @@ export function UsageView() {
               Weekly limit remaining
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              You have used some of your weekly limit. It fully refreshes in{" "}
-              {formatTimeToReset(usage.resetAt)}.
+              You have used some of your weekly limit. It fully refreshes soon.
             </p>
           </div>
         </div>
+        {/* Time to reset lives with the weekly limit */}
+        <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-sm">
+          <span className="text-muted-foreground">Time to reset</span>
+          <span className="font-medium text-foreground">
+            {formatTimeToReset(usage.resetAt)}
+          </span>
+        </div>
       </div>
 
-      {/* Credits used — bar + figures */}
+      {/* Monthly credits used — bar + figures */}
       <div className="rounded-lg border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-sm font-medium text-foreground">
-            Credits used
+            Monthly credits used
           </span>
           <Badge variant="secondary" className="text-[11px]">
             {usage.planName}
           </Badge>
         </div>
-        <Progress value={used} aria-label="Credits used" />
+        <Progress value={used} aria-label="Monthly credits used" />
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           <span>
             <span className="font-medium text-foreground">
               {usage.creditsUsed.toLocaleString()}
             </span>{" "}
-            used
+            used this month
           </span>
-          <span>{usage.creditsTotal.toLocaleString()} covered in plan</span>
+          <span>{usage.creditsTotal.toLocaleString()} covered monthly</span>
         </div>
-      </div>
-
-      {/* Time to reset */}
-      <div className="flex items-center justify-between px-1 text-sm">
-        <span className="text-muted-foreground">Time to reset</span>
-        <span className="font-medium text-foreground">
-          {formatTimeToReset(usage.resetAt)}
-        </span>
       </div>
 
       <Separator />
