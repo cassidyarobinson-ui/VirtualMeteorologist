@@ -17,6 +17,7 @@ import {
   VMPrompt,
   VMMessage,
   createVMMessage,
+  deriveVMTitle,
   SEED_MESSAGES,
 } from "@/lib/virtual-met";
 import { Sparkles, Info, X } from "lucide-react";
@@ -59,9 +60,21 @@ export function VirtualMetPanel({ onClose }: { onClose?: () => void }) {
     setComposerText(text);
   }
 
-  function openNewPrompt(draft?: Partial<VMPromptValues>) {
-    setAllPromptsOpen(false);
-    setPromptDialog({ open: true, mode: "new", draft });
+  // Save a sent message as a pinned prompt (one-click, from the message
+  // bubble). This is now the primary way users create prompts — from things
+  // they've already asked — rather than authoring a blank one.
+  function pinMessage(text: string) {
+    if (isMessagePinned(text)) {
+      toast.info("Already saved to prompts");
+      return;
+    }
+    addPrompt(deriveVMTitle(text), text, true);
+    toast.info("Pinned to prompts");
+  }
+
+  function isMessagePinned(text: string): boolean {
+    const needle = text.trim();
+    return prompts.some((p) => p.prompt.trim() === needle);
   }
 
   function openEditPrompt(p: VMPrompt) {
@@ -178,6 +191,8 @@ export function VirtualMetPanel({ onClose }: { onClose?: () => void }) {
             messages={messages}
             onCopy={copyText}
             onEditUser={loadIntoComposer}
+            onPinUser={pinMessage}
+            isPinned={isMessagePinned}
             onDeleteChat={clearHistory}
           />
         )}
@@ -190,7 +205,6 @@ export function VirtualMetPanel({ onClose }: { onClose?: () => void }) {
         prompts={prompts}
         onSelectPrompt={(p) => loadIntoComposer(p.prompt)}
         onTogglePin={togglePin}
-        onNewPrompt={() => openNewPrompt()}
         onAllPrompts={() => setAllPromptsOpen(true)}
         onClearHistory={clearHistory}
         onOpenCredits={() => setCreditsOpen(true)}
@@ -218,7 +232,6 @@ export function VirtualMetPanel({ onClose }: { onClose?: () => void }) {
         }}
         onEdit={openEditPrompt}
         onDelete={deletePrompt}
-        onNewPrompt={() => openNewPrompt()}
       />
 
       {/* Credits (admin) */}

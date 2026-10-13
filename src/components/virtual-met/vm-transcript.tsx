@@ -22,6 +22,7 @@ import {
   RefreshCw,
   MoreHorizontal,
   Pencil,
+  Bookmark,
 } from "lucide-react";
 
 interface VMTranscriptProps {
@@ -29,6 +30,10 @@ interface VMTranscriptProps {
   onCopy: (text: string) => void;
   /** Load a user message back into the composer for editing. */
   onEditUser: (text: string) => void;
+  /** Save a user message as a pinned prompt. */
+  onPinUser: (text: string) => void;
+  /** Whether a given message text is already saved as a prompt. */
+  isPinned: (text: string) => boolean;
   onDeleteChat: () => void;
 }
 
@@ -36,6 +41,8 @@ export function VMTranscript({
   messages,
   onCopy,
   onEditUser,
+  onPinUser,
+  isPinned,
   onDeleteChat,
 }: VMTranscriptProps) {
   return (
@@ -47,6 +54,8 @@ export function VMTranscript({
             message={m}
             onCopy={() => onCopy(m.content)}
             onEdit={() => onEditUser(m.content)}
+            onPin={() => onPinUser(m.content)}
+            isPinned={isPinned(m.content)}
           />
         ) : (
           <AssistantBlock
@@ -65,10 +74,14 @@ function UserBubble({
   message,
   onCopy,
   onEdit,
+  onPin,
+  isPinned,
 }: {
   message: VMMessage;
   onCopy: () => void;
   onEdit: () => void;
+  onPin: () => void;
+  isPinned: boolean;
 }) {
   return (
     <div className="flex flex-col items-end">
@@ -82,6 +95,15 @@ function UserBubble({
         </ActionIcon>
         <ActionIcon label="Copy" onClick={onCopy}>
           <Copy className="size-3" />
+        </ActionIcon>
+        <ActionIcon
+          label={isPinned ? "Saved to prompts" : "Save & pin as prompt"}
+          onClick={onPin}
+          active={isPinned}
+        >
+          <Bookmark
+            className={`size-3 ${isPinned ? "fill-current" : ""}`}
+          />
         </ActionIcon>
       </div>
     </div>

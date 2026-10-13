@@ -23,7 +23,6 @@ interface PromptsDropdownProps {
   onSelect: (prompt: VMPrompt) => void;
   /** Toggle a prompt's pinned state from the row pin icon. */
   onTogglePin: (id: string) => void;
-  onNewPrompt: () => void;
   onAllPrompts: () => void;
 }
 
@@ -37,7 +36,6 @@ export function PromptsDropdown({
   prompts,
   onSelect,
   onTogglePin,
-  onNewPrompt,
   onAllPrompts,
 }: PromptsDropdownProps) {
   const pinned = prompts.filter((p) => p.isPinned);
@@ -86,10 +84,6 @@ export function PromptsDropdown({
         </div>
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={onNewPrompt}>
-          <Plus />
-          New prompt
-        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onAllPrompts}>
           <List />
           All Prompts

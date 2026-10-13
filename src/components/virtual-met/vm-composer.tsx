@@ -25,7 +25,6 @@ interface VMComposerProps {
   prompts: VMPrompt[];
   onSelectPrompt: (p: VMPrompt) => void;
   onTogglePin: (id: string) => void;
-  onNewPrompt: () => void;
   onAllPrompts: () => void;
   onClearHistory: () => void;
   onOpenCredits: () => void;
@@ -47,7 +46,6 @@ export function VMComposer({
   prompts,
   onSelectPrompt,
   onTogglePin,
-  onNewPrompt,
   onAllPrompts,
   onClearHistory,
   onOpenCredits,
@@ -100,7 +98,6 @@ export function VMComposer({
               prompts={prompts}
               onSelect={onSelectPrompt}
               onTogglePin={onTogglePin}
-              onNewPrompt={onNewPrompt}
               onAllPrompts={onAllPrompts}
             />
 

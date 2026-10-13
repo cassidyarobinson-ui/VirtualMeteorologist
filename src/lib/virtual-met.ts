@@ -50,6 +50,15 @@ export function createVMPrompt(title: string, prompt: string, isPinned: boolean)
   return { id: crypto.randomUUID(), title: title.trim(), prompt: prompt.trim(), isPinned, createdAt: now, updatedAt: now };
 }
 
+/** Derive a short prompt title from a message body (first clause, capped). */
+export function deriveVMTitle(text: string): string {
+  const trimmed = text.trim().replace(/\s+/g, " ");
+  if (!trimmed) return "Untitled prompt";
+  const firstClause = trimmed.split(/[?.!\n]/)[0] || trimmed;
+  const capped = firstClause.slice(0, 48).trim();
+  return capped.length < firstClause.trim().length ? `${capped}…` : capped;
+}
+
 /** Pinned first, then most-recently-updated. */
 export function sortVMPrompts(prompts: VMPrompt[]): VMPrompt[] {
   return [...prompts].sort((a, b) => {

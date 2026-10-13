@@ -26,7 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { VMPrompt } from "@/lib/virtual-met";
-import { Pencil, Trash2, ArrowUp, Plus } from "lucide-react";
+import { Pencil, Trash2, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 
 interface AllPromptsDialogProps {
@@ -36,12 +36,12 @@ interface AllPromptsDialogProps {
   onRun: (prompt: VMPrompt) => void;
   onEdit: (prompt: VMPrompt) => void;
   onDelete: (id: string) => void;
-  onNewPrompt: () => void;
 }
 
 /**
- * "All Prompts" modal from the mockup: a TITLE / ACTIONS table where each row
- * has edit, delete, and run (↑) actions, plus a "New Prompt" button and Done.
+ * "All Prompts" modal: a TITLE / ACTIONS table where each row has edit, delete,
+ * and run (↑) actions. Prompts are created by saving/pinning messages from the
+ * chat, so there is no "New Prompt" button here.
  */
 export function AllPromptsDialog({
   open,
@@ -50,7 +50,6 @@ export function AllPromptsDialog({
   onRun,
   onEdit,
   onDelete,
-  onNewPrompt,
 }: AllPromptsDialogProps) {
   const [deleting, setDeleting] = useState<VMPrompt | null>(null);
 
@@ -121,11 +120,7 @@ export function AllPromptsDialog({
             )}
           </div>
 
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={onNewPrompt}>
-              <Plus className="size-4" />
-              New Prompt
-            </Button>
+          <DialogFooter>
             <Button onClick={() => onOpenChange(false)}>Done</Button>
           </DialogFooter>
         </DialogContent>
