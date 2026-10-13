@@ -60,16 +60,16 @@ export function VirtualMetPanel({ onClose }: { onClose?: () => void }) {
     setComposerText(text);
   }
 
-  // Save a sent message as a pinned prompt (one-click, from the message
-  // bubble). This is now the primary way users create prompts — from things
-  // they've already asked — rather than authoring a blank one.
+  // Saving a message opens the New Prompt modal pre-filled with the message
+  // text (and a derived name), so the user names it / sets pin before saving.
+  // This is the primary way users create prompts — from things they've asked.
   function pinMessage(text: string) {
-    if (isMessagePinned(text)) {
-      toast.info("Already saved to prompts");
-      return;
-    }
-    addPrompt(deriveVMTitle(text), text, true);
-    toast.info("Pinned to prompts");
+    setAllPromptsOpen(false);
+    setPromptDialog({
+      open: true,
+      mode: "new",
+      draft: { name: deriveVMTitle(text), prompt: text, isPinned: true },
+    });
   }
 
   function isMessagePinned(text: string): boolean {
