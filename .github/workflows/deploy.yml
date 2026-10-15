@@ -1,0 +1,68 @@
+# Build the Next.js static export and publish it to GitHub Pages.
+#
+# The app uses `output: "export"` (see next.config.ts), so `next build` emits a
+# fully static site into `out/`. GitHub serves project sites under
+# /<repo>/, so we set BASE_PATH to the repo name at build time; next.config.ts
+# already prefers an explicit BASE_PATH, so CSS/JS and links resolve correctly.
+#
+# This runs alongside the GitLab Pages pipeline (.gitlab-ci.yml); the two don't
+# interfere — each host builds from the same source with its own base path.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Allow manually re-running the deploy from the Actions tab.
+  workflow_dispatch:
+
+# Permissions required for the Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; let an in-progress one finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static export
+        env:
+          # GitHub Pages serves this project at /<repo>/, so the app must know
+          # its base path. The repo name is available as the second path
+          # segment of the GITHUB_REPOSITORY ("owner/repo") variable.
+          BASE_PATH: /${{ github.event.repository.name }}
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
